@@ -23,10 +23,10 @@ def get_chat_session():
             system_instruction=f"Your name is {BOT_NAME}. You are a witty AI assistant.",
             tools=[types.Tool(google_search=types.GoogleSearch())]
         )
+		history=formatted_history
     )
 
 	
-chat_session = get_chat_session()
 
 for message in st.session_state.messages:
 	name = USER_NAME if message["role"] == "user" else BOT_NAME
@@ -39,7 +39,14 @@ if prompt := st.chat_input("What can I help you with?"):
 		st.markdown(f"**{USER_NAME}**: {prompt}")
 		
 	with st.chat_message("assistant"):
-		response = chat_session.send_message(prompt)
-		st.markdown(f"**{BOT_NAME}**: {response.text}")
-		st.session_state.messages.append({"role": "assistant", "content": response.text})
-	
+		formatted_history = [
+			{"role": m["role"], "parts": [{"text": m["content"]}]}
+			for m in st.session_state.messages[:-1]
+		]
+		try:
+			chat_session = get_chat_session()
+			response = chat_session.send_message(prompt)
+			st.markdown(f"**{BOT_NAME}**: {response.text}")
+			st.session_state.messages.append({"role": "assistant", "content": response.text})
+		except Exception as e:
+			st.error(f"Error: {e}")
