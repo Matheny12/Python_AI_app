@@ -22,7 +22,7 @@ def get_chat_session():
         config=types.GenerateContentConfig(
             system_instruction=f"Your name is {BOT_NAME}. You are a witty AI assistant.",
             tools=[types.Tool(google_search=types.GoogleSearch())]
-        )
+        ),
 		history=formatted_history
     )
 
