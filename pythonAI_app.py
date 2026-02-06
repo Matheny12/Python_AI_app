@@ -33,13 +33,13 @@ def format_math_content(text):
 	text = text.replace(r"\(", "$").replace(r"\)", "$")
 	return text
 
-def get_logged_in_user(cookies_dict):
+def get_logged_in_user(cookies_dict, data):
 	if "username" in st.session_state:
 		return st.session_state.username
 	
 	if cookies_dict and "bartbot_user" in cookies_dict:
 		saved_user = cookies_dict["bartbot_user"]
-		if saved_user in all_data:
+		if saved_user in data:
 			st.session_state.username = saved_user
 			return saved_user
 	return None
