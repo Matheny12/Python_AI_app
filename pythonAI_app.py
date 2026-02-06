@@ -56,10 +56,17 @@ with st.sidebar:
 				st.session_state.active_chat_id = chat_id
 				st.rerun()
 		with col2:
-			if st.button("X", key=f"del_{chat_id}", help="Delete this chat"):
+			if st.button(label, key=f"del_{chat_id}", help="Delete this chat"):
 				del st.session_state.all_chats[chat_id]
 
-			save_data(st.session_state.all_chats)
+				if st.session_state.active_chat_id == chat_id:
+					st.session_state.active_chat_id = None
+				save_data(st.session_state.all_chats)
+				st.rerun()
+
+
+		if st.button(label, key=chat_id, use_container_width=True):
+			st.session_state.active_chat_id = chat_id
 			st.rerun()
 
 st.title("BartBot")
