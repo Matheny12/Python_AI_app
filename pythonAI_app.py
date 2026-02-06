@@ -203,12 +203,25 @@ if st.session_state.active_chat_id:
 		with col_btn:
 			if uploaded_file:
 				if st.button("Analyze", use_container_width=True, key=f"analyze_btn_{current_id}"):
+					file_bytes = uploaded_file.read()
+					file_mime = uploaded_file.type
+					file_name = uploaded_file.name
+
 					st.session_state.pending_file = {
-						"bytes": uploaded_file.read(),
-						"mime": uploaded_file.type,
-						"name": uploaded_file.name
+						"bytes": file_bytes,
+						"mime": file_mime,
+						"name": file_name
 					}
+
 					st.session_state.last_uploaded = uploaded_file.name
+
+					if file_mime.startswith("image/"):
+						encoded_img = base64.b64encode(file_bytes).decode('utf-8')
+						messages.append({
+							"role": "user",
+							"content": f"IMAGE_DATA:{encoded_img}",
+							"caption": f"Uploaded: {file_name}"
+						})
 
 					messages.append({"role": "user", "content": f"Analyze this file: {uploaded_file.name}"})
 					save_data(all_data)
