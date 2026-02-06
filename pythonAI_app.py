@@ -94,12 +94,14 @@ USER_NAME = "You"
 if "all_chats" not in st.session_state:
 	st.session_state.all_chats = load_data()
 if "active_chat_id" not in st.session_state:
-	st.session_state.active_chat_id = list(st.session_state.all_chats.keys())[0] if st.session_state.all_chats else None
+	st.session_state.active_chat_id = None
 
 with st.sidebar:
 	st.write(f"Logged in as: **{username.capitalize()}**")
 	if st.button("Logout"):
-		del st.session_state.username
+		cookie_manager.delete("bartbot_user")
+		for key in list(st.session_state.keys()):
+			del st.session_state.username
 		st.rerun()
 
 	st.divider()
@@ -111,6 +113,7 @@ with st.sidebar:
 		save_data(all_data)
 		st.rerun()
 	
+	chat_ids = list(user_chats.keys())
 
 	for chat_id in reversed(list(user_chats.keys())):
 		history = user_chats[chat_id]
@@ -148,17 +151,24 @@ if st.session_state.active_chat_id:
         	),
 			history=history_to_send
 	    )
-	for i, message in enumerate(messages):
-		name = USER_NAME if message["role"] == "user" else BOT_NAME
-		with st.chat_message(message["role"]):
-			content = message["content"]
-			if isinstance(content, str) and content.startswith("IMAGE_DATA:"):
-				base64_str = content.replace("IMAGE_DATA:", "")
-				img_bytes = base64.b64decode(base64_str)
-				st.image(img_bytes, caption=message.get("caption", ""))
-				st.download_button("Download", img_bytes, f"{message.get("caption", "")}.png", "image/png", key=f"dl_{current_id}_{i}")
-			else:
-				st.markdown(f"**{name}**: {content}")
+	
+for i, message in enumerate(messages):
+	name = USER_NAME if message["role"] == "user" else BOT_NAME
+	with st.chat_message(message["role"]):
+		content = message["content"]
+		if isinstance(content, str) and content.startswith("IMAGE_DATA:"):
+			base64_str = content.replace("IMAGE_DATA:", "")
+			img_bytes = base64.b64decode(base64_str)
+			st.image(img_bytes, caption=message.get("caption", ""))
+			st.download_button(
+				label="Download",
+				data=img_bytes,
+				file_name=f"bartbot_{i}.png",
+				mime="image/png",
+				key=f"download_btn_{current_id}_{i}"
+			)
+		else:
+			st.markdown(f"**{name}**: {content}")
 
 	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
 		messages.append({"role": "user", "content": prompt})
@@ -188,8 +198,13 @@ if st.session_state.active_chat_id:
 							img_data = response.generated_images[0].image.image_bytes
 							encoded_img = base64.b64encode(img_data).decode('utf-8')
 							st.image(img_data, caption=image_prompt)
-							st.download_button("Download Image", img_data, f"{image_prompt}.png", "image/png")
-
+							st.download_button(
+											label="Download",
+											data=img_bytes,
+											file_name=f"bartbot_{i}.png",
+											mime="image/png",
+											key=f"download_btn_{current_id}_{i}"
+										)
 							messages.append({
 								"role": "assistant",
 								"content": f"IMAGE_DATA:{encoded_img}",
