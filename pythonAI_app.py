@@ -189,15 +189,15 @@ if st.session_state.active_chat_id:
 		messages.append({"role": "user", "content": prompt})
 		save_data(all_data)
 		st.rerun()
-		with st.chat_message("user"):
-			st.markdown(f"**{USER_NAME}**: {prompt}")
-	
+		
+	if messages and messages[-1]["role"] == "user":	
+		last_prompt = messages[-1]["content"]
 		with st.chat_message("assistant"):
-			if prompt.lower().startswith("/image"):
+			if last_prompt.lower().startswith("/image"):
 				model_options = [
 					'imagen-4.0-generate-001'
                 ]
-				image_prompt = prompt[7:].strip()
+				image_prompt = last_prompt[7:].strip()
 				success = False
                 
 				with st.spinner("Bartholemew is painting..."):
