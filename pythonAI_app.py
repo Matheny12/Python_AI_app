@@ -192,7 +192,7 @@ if st.session_state.active_chat_id:
 			else:
 				if isinstance(content, str):
 					content = content.replace(r"\[", "$$").replace(r"\]", "$$")
-                    content = content.replace(r"\(", "$").replace(r"\)", "$")
+					content = content.replace(r"\(", "$").replace(r"\)", "$")
 				st.markdown(f"**{name}**: {content}")
 
 	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
