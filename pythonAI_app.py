@@ -49,8 +49,17 @@ with st.sidebar:
 		history = st.session_state.all_chats[chat_id]
 		label = history[0]["content"][:25] + "..." if history else "New Conversation"
 
-		if st.button(label, key=chat_id, use_container_width=True):
-			st.session_state.active_chat_id = chat_id
+		col1, col2 = st.sidebar.columns([0.8, 0.2])
+
+		with col1:
+			if st.button(label, key=f"select_{chat_id}", use_container_width=True):
+				st.session_state.active_chat_id = chat_id
+				st.rerun()
+		with col2:
+			if st.button(label, key=f"del_{chat_id}", help="Delete this chat"):
+				del st.session_state.all_chats[chat_id]
+
+			save_data(st.session_state.all_chats)
 			st.rerun()
 
 st.title("BartBot")
