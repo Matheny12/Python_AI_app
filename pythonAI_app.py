@@ -170,7 +170,7 @@ st.markdown("""
 		position: sticky;
 			top: 2.8rem;
 			z-index: 999;
-			background-color: rgba(255, 255, 255, 0.9);
+			background-color: rgba(0, 0, 0, 0.5);
 			padding: 10px;
 			border-radius: 10px;
 			border: 1px solid #ddd;
