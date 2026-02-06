@@ -24,6 +24,43 @@ def save_data(data):
 	with open (DB_FILE, "w") as f:
 		json.dump(data, f, indent=4)
 
+if "username" not in st.session_state:
+	st.title("Welcome to BartBot")
+	tab1, tab2 = st.tabs(["Login", "Create Account"])
+
+	with tab1:
+		u_login = st.text_input("Username", key="l_user")
+		p_login = st.text_input("Password", type="password", key="l_pass")
+		if st.button("Enter BartBot"):
+			if u_login in all_data and all_data[u_login].get("password") == p_login:
+				st.session_state.username = u_login
+				st.rerun()
+			else:
+				st.error("Invalid username or password")
+
+	with tab2:
+		u_new = st.text_input("Choose Username", key="n_user")
+		p_new = st.text_input("Choose Password", type="password", key="n_pass")
+		if st.button("Register"):
+			if u_new in all_data:
+				st.error("Username already exists!")
+			elif u_new and p_new:
+				all_data[u_new] = {"password": p_new, "chats": {}}
+				save_data(all_data)
+				st.success("Account Created! Please login now.")
+			else:
+				st.warning("Please fill in both fields.")
+	st.stop()
+
+username = st.session_state.username
+user_chats = all_data[username]["chats"]
+
+if username not in all_data:
+	all_data[username] = {}
+	save_data(all_data)
+
+user_chats = all_data[username]
+
 API_KEY = st.secrets.get("GEMINI_KEY")
 client = genai.Client(api_key=API_KEY)
 
@@ -36,18 +73,23 @@ if "active_chat_id" not in st.session_state:
 	st.session_state.active_chat_id = list(st.session_state.all_chats.keys())[0] if st.session_state.all_chats else None
 
 with st.sidebar:
-	st.title("Chat History")
-	if st.button("Start New Chat", use_container_width=True):
-		new_id = str(uuid.uuid4())
-		st.session_state.all_chats[new_id] = []
-		st.session_state.active_chat_id = new_id
-		save_data(st.session_state.all_chats)
+	st.write(f"Logged in as: **{username.capitalize()}**")
+	if st.button("Logout"):
+		del st.session_state.username
 		st.rerun()
-	
+
 	st.divider()
 
-	for chat_id in reversed(list(st.session_state.all_chats.keys())):
-		history = st.session_state.all_chats[chat_id]
+	if st.button("Start New Chat", use_container_width=True):
+		new_id = str(uuid.uuid4())
+		user_chats[new_id] = []
+		st.session_state.active_chat_id = new_id
+		save_data(all_data)
+		st.rerun()
+	
+
+	for chat_id in reversed(list(user_chats.keys())):
+		history = user_chats[chat_id]
 		label = history[0]["content"][:25] + "..." if history else "New Conversation"
 
 		col1, col2 = st.sidebar.columns([0.8, 0.2])
@@ -69,7 +111,7 @@ st.title("BartBot")
 
 if st.session_state.active_chat_id:
 	current_id = st.session_state.active_chat_id
-	messages = st.session_state.all_chats[current_id]
+	messages = user_chats[current_id]
 	
 	def get_chat_session(history_to_send):
 		return client.chats.create(
