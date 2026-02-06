@@ -52,7 +52,7 @@ st.title("BartBot")
 
 if st.session_state.active_chat_id:
 	current_id = st.session_state.active_chat_id
-	message = st.session_state.all_chats[current_id]
+	messages = st.session_state.all_chats[current_id]
 	
 	def get_chat_session():
 		return client.chats.create(
