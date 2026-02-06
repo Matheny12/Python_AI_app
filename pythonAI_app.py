@@ -99,7 +99,9 @@ if "active_chat_id" not in st.session_state:
 with st.sidebar:
 	st.write(f"Logged in as: **{username.capitalize()}**")
 	if st.button("Logout"):
-		cookie_manager.delete("bartbot_user")
+		all_cookies = cookie_manager.get_all()
+		if "bartbot_user" in all_cookies:
+			cookie_manager.delete("bartbot_user")
 		for key in list(st.session_state.keys()):
 			del st.session_state.username
 		st.rerun()
