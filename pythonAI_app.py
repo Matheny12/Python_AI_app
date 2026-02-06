@@ -11,7 +11,7 @@ from google.genai import types
 from PIL import Image
 from io import BytesIO
 
-cookie_manager = stx.CookieManager((key="bartbot_cookie_manager"))
+cookie_manager = stx.CookieManager(key="bartbot_cookie_manager")
 
 def format_math_content(text):
 	if not isinstance(text, str):
