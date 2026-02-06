@@ -13,6 +13,9 @@ from io import BytesIO
 
 cookie_manager = stx.CookieManager(key="bartbot_cookie_manager")
 
+all_cookies = cookie_manager.get_all()
+
+
 def format_math_content(text):
 	if not isinstance(text, str):
 		return text
@@ -24,7 +27,6 @@ def get_logged_in_user():
 	if "username" in st.session_state:
 		return st.session_state.username
 	
-	cookies = cookie_manager.get_all()
 	
 	if cookies and "bartbot_user" in cookies:
 		saved_user = cookies["bartbot_user"]
@@ -53,8 +55,8 @@ def save_data(data):
 all_data = load_data()
 
 if "username" not in st.session_state:
-	cookies_ready = cookie_manager.get_all()
-	if not cookies_ready and "init_waited" not in st.session_state:
+	all_cookies = cookie_manager.get_all()
+	if not all_cookies and "init_waited" not in st.session_state:
 		st.session_state.init_waited = True
 		st.rerun()
 
