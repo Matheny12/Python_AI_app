@@ -80,25 +80,38 @@ if st.session_state.active_chat_id:
 	
 		with st.chat_message("assistant"):
 			if prompt.lower().startswith("/image"):
-				try:
-					with st.spinner("Bartholemew is painting..."):
-						image_prompt = prompt[7:]
-						response = client.models.generate_images(
-							model='gemini-2.5-flash-image',
-							prompt=image_prompt,
-							config=types.GenerateImagesConfig(
-								number_of_images=1,
-								aspect_ratio="1:1"
+				model_options = [
+					'imagen-4.0-generate-001',
+					'imagen-3.0-generate-002',
+					'gemini-3-pro-image-preview'
+				]
+				image_prompt = prompt[7:].strip()
+				success = False
+				for model_id in model_options:
+					try:
+						with st.spinner("Bartholemew is painting..."):
+							image_prompt = prompt[7:]
+							response = client.models.generate_images(
+								model=model_id,
+								prompt=image_prompt,
+								config=types.GenerateImagesConfig(
+									number_of_images=1,
+									aspect_ratio="1:1"
+								)
 							)
-						)
 
-						generated_image = response.generated_images[0]
-						st.image(generated_image.image.image_bytes, caption=image_prompt)
+							generated_image = response.generated_images[0]
+							st.image(generated_image.image.image_bytes, caption=image_prompt)
 
-						messages.append({"role": "assistant", "content": f"Generated Image: {image_prompt}"})
-						save_data(st.session_state.all_chats)
-				except Exception as e:
-					st.error(f"Image Error: {e}")
+							messages.append({"role": "assistant", "content": f"Generated Image: {image_prompt}"})
+							save_data(st.session_state.all_chats)
+							success = True
+							break
+					except Exception as e:
+						st.warning(f"Image failed with {model_id}, trying next model")
+						continue
+				if not success:
+					st.error("Image Failed")
 			else:
 				formatted_history = []
 				for m in messages[:-1]:
