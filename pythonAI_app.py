@@ -120,7 +120,7 @@ if st.session_state.active_chat_id:
 							img_data = response.generated_images[0].image.image_bytes
 							encoded_img = base64.b64encode(img_data).decode('utf-8')
 							st.image(img_data, caption=image_prompt)
-							st.download_button("Download Image", img_data, f"{caption}.png", "image/png")
+							st.download_button("Download Image", img_data, f"{message.get("caption", ""}.png", "image/png")
 
 							messages.append({
 								"role": "assistant",
