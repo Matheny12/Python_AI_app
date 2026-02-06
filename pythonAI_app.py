@@ -31,7 +31,7 @@ if "active_chat_id" not in st.session_state:
 
 with st.sidebar:
 	st.title("Chat History")
-	if st.button("Start New Chat", use_contaoner_width=True):
+	if st.button("Start New Chat", use_container_width=True):
 		new_id = str(uuid.uuid4())
 		st.session_state.all_chats[new_id] = []
 		st.session_state.active_chat_id = new_id
