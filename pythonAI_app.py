@@ -118,8 +118,9 @@ with st.sidebar:
 	st.write(f"Logged in as: **{username.capitalize()}**")
 	if st.button("Logout"):
 		cookie_manager.delete("bartbot_user")
-		st.session_state.pop("username", None)
-		st.session_state.pop("active_chat_id", None)
+		for key in list(st.session_state.keys()):
+			del st.session_state[key]
+		time.sleep(0.2)
 		st.rerun()
 
 		if st.session_state.get("active_chat_id"):
