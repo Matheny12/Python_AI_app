@@ -34,6 +34,9 @@ def format_math_content(text):
 	return text
 
 def get_logged_in_user(cookies_dict, data):
+	if st.session_state.get("logging_out"):
+		return None
+	
 	if "username" in st.session_state:
 		return st.session_state.username
 	
@@ -117,10 +120,11 @@ def count_tokens(text_list):
 with st.sidebar:
 	st.write(f"Logged in as: **{username.capitalize()}**")
 	if st.button("Logout"):
+		st.session_state.logging_out = True
 		cookie_manager.delete("bartbot_user")
 		for key in list(st.session_state.keys()):
-			del st.session_state[key]
-		time.sleep(0.2)
+			if key != "logging_out":
+				del st.session_state[key]
 		st.rerun()
 
 		if st.session_state.get("active_chat_id"):
