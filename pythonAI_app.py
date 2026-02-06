@@ -84,7 +84,7 @@ if st.session_state.active_chat_id:
 					with st.spinner("Bartholemew is painting..."):
 						image_prompt = prompt[7:]
 						response = client.models.generate_images(
-							model='imagen-4.0-generate-001',
+							model='imagen-3.0-generate-001',
 							prompt=image_prompt,
 							config=types.GenerateImagesConfig(number_of_images=1)
 						)
