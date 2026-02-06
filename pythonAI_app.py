@@ -167,6 +167,12 @@ st.title("BartBot")
 if st.session_state.active_chat_id:
 	current_id = st.session_state.active_chat_id
 	messages = user_chats[current_id]
+
+	uploaded_file = st.file_uploader(
+		"Add a file"
+		type=["pdf", "txt", "png", "jpg", "jpeg", "py", "csv"],
+		label_visibility="collapsed"
+	)
 	
 	def get_chat_session(history_to_send):
 		return client.chats.create(
@@ -200,6 +206,13 @@ if st.session_state.active_chat_id:
 				st.markdown(f"**{name}**: {content}")
 
 	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
+		if uploaded_file:
+			st.session_state.pending_file = {
+				"bytes": uploaded_file.read(),
+				"mime": uploaded_file.type,
+				"name": uploaded_file.name
+			}
+
 		messages.append({"role": "user", "content": prompt})
 		save_data(all_data)
 		st.rerun()
@@ -250,7 +263,20 @@ if st.session_state.active_chat_id:
 					formatted_history.append({"role": gemini_role, "parts": [{"text": clean_text}]})
 				try:
 					chat_session = get_chat_session(formatted_history)
-					response = chat_session.send_message(last_user_meg if 'last_user_msg' in locals() else last_prompt)
+					content_to_send = [last_prompt]
+					
+					if "pending_file" in st.session_state:
+						file_data = st.session_state.pending_file
+						content_to_send.append(
+							types.Part.from_bytes(
+								data=file_data["bytes"],
+								mime_type=file_data["mime"]
+							)
+						)
+						st.caption(f"Processing: {file_data["name"]}")
+						del st.session_state.pending_file
+
+					response = chat_session.send_message(content_to_send)
 					messages.append({"role": "assistant", "content": response.text})
 					save_data(all_data)
 					st.rerun()
