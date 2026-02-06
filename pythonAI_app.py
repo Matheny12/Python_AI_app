@@ -212,7 +212,6 @@ if st.session_state.active_chat_id:
 							})
 							save_data(st.session_state.all_chats)
 							success = True
-							st.rerun()
 							break
 					except:
 						continue
