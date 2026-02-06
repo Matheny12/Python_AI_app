@@ -75,14 +75,14 @@ if st.session_state.active_chat_id:
 	
 	with st.chat_message("assistant"):
 		formatted_history = []
-		for m in st.session_state.messages[:-1]:
+		for m in messages[:-1]:
 			gemini_role = "model" if m["role"] == "assistant" else "user"
 			formatted_history.append({"role": gemini_role, "parts": [{"text": m["content"]}]})
 		try:
 			chat_session = get_chat_session()
 			response = chat_session.send_message(prompt)
 			st.markdown(f"**{BOT_NAME}**: {response.text}")
-			st.session_state.messages.append({"role": "assistant", "content": response.text})
+			messages.append({"role": "assistant", "content": response.text})
 		except Exception as e:
 			st.error(f"Error: {e}")		
 else:
