@@ -2,6 +2,7 @@ import os
 import json
 import time
 import uuid
+import base64
 import streamlit as st
 from google import genai
 from google.genai import types
@@ -82,8 +83,15 @@ if st.session_state.active_chat_id:
 	for message in messages:
 		name = USER_NAME if message["role"] == "user" else BOT_NAME
 		with st.chat_message(message["role"]):
-			st.markdown(f"**{name}**: {message["content"]}")
-		
+			content = message["content"]
+			if isinstance(content, str) and content.startswith("IMAGE_DATA:"):
+				base64_str = content.replace("IMAGE_DATA:", "")
+				img_bytes = base64.b64decode(base64_str)
+				st.image(img_bytes, caption=message.get("caption", ""))
+				st.download_button("Download", img_bytes, f"bart_{uuid.uuid4().hex[:5]}.png", "image/png", key=uuid.uuid4().hex)
+			else:
+				st.markdown(f"**{name}**: {content}")
+
 	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
 		messages.append({"role": "user", "content": prompt})
 		with st.chat_message("user"):
@@ -101,7 +109,6 @@ if st.session_state.active_chat_id:
 				for model_id in model_options:
 					try:
 						with st.spinner("Bartholemew is painting..."):
-							image_prompt = prompt[7:]
 							response = client.models.generate_images(
 								model=model_id,
 								prompt=image_prompt,
@@ -110,19 +117,24 @@ if st.session_state.active_chat_id:
 									aspect_ratio="1:1"
 								)
 							)
+							img_data = response.generated_images[0].image.image_bytes
+							encoded_img = base64.b64encode(img_data).decode('utf-8')
+							st.image(img_data, caption=image_prompt)
+							st.download_button("Downloaded Image", img_data, "painting.png", "image/png")
 
-							generated_image = response.generated_images[0]
-							st.image(generated_image.image.image_bytes, caption=image_prompt)
-
-							messages.append({"role": "assistant", "content": f"Generated Image: {image_prompt}"})
+							messages.append({
+								"role": "assistant",
+								"content": f"IMAGE_DATA:{encoded_img}",
+								"caption": image_prompt
+							})
 							save_data(st.session_state.all_chats)
 							success = True
 							break
-					except Exception as e:
-						st.warning(f"Image failed with {model_id}, trying next model")
+					except:
 						continue
+					
 				if not success:
-					st.error("Image Failed")
+					st.error("Image generation failed with all models.")
 			else:
 				formatted_history = []
 				for m in messages[:-1]:
