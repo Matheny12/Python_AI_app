@@ -97,7 +97,7 @@ if "active_chat_id" not in st.session_state:
 	st.session_state.active_chat_id = None
 
 def count_tokens(text_list):
-	total_chars = sum(len(str(m["content"]) for m in text_list if "content" in m)
+	total_chars = sum(len(str(m["content"]) for m in text_list if "content" in m))
 	return total_chars // 4
 
 with st.sidebar:
