@@ -50,9 +50,7 @@ all_cookies = cookie_manager.get_all()
 all_data = load_data()
 current_user = get_logged_in_user(all_cookies, all_data)
 
-
 if "username" not in st.session_state:
-	all_cookies = cookie_manager.get_all()
 	if not all_cookies and "init_waited" not in st.session_state:
 		st.session_state.init_waited = True
 		st.rerun()
