@@ -238,6 +238,8 @@ if st.session_state.active_chat_id:
 					response = chat_session.send_message(prompt)
 					st.markdown(f"**{BOT_NAME}**: {response.text}")
 					messages.append({"role": "assistant", "content": response.text})
+					save_data(all_data)
+					st.rerun()
 				except Exception as e:
 					st.error(f"Error: {e}")		
 else:
