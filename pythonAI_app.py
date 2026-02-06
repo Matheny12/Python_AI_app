@@ -131,11 +131,11 @@ with st.sidebar:
 		with col2:
 			if st.button("X", key=f"del_{chat_id}", help="Delete this chat"):
 				if chat_id in user_chats:
-					del st.user_chats[chat_id]
+					del user_chats[chat_id]
 
 				if st.session_state.active_chat_id == chat_id:
 					st.session_state.active_chat_id = None
-				save_data(st.session_state.all_chats)
+				save_data(all_data)
 				st.rerun()
 
 
