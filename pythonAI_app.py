@@ -13,6 +13,13 @@ from io import BytesIO
 
 cookie_manager = stx.CookieManager()
 
+def format_math_content(text):
+	if not isinstance(text, str):
+		return text
+	text = text.replace(r"\[", "$$").replace(r"\]", "$$")")
+	text = text.replace(r"\(", "$").replace(r"\)", "$")
+	return text
+
 def get_logged_in_user():
 	if "username" in st.session_state:
 		return st.session_state.username
@@ -161,7 +168,7 @@ if st.session_state.active_chat_id:
 		return client.chats.create(
         	model="gemini-2.5-flash-lite",
         	config=types.GenerateContentConfig(
-        	    system_instruction=f"Your name is {BOT_NAME}. You are a witty AI assistant.",
+        	    system_instruction=f"Your name is {BOT_NAME}. You are a witty AI assistant. When performing math, always use LaTeX notation with double dollar signs for blocks and single dollar signs for inline equations.",
         	    tools=[types.Tool(google_search=types.GoogleSearch())]
         	),
 			history=history_to_send
@@ -183,6 +190,9 @@ if st.session_state.active_chat_id:
 					key=f"download_btn_{current_id}_{i}"
 				)
 			else:
+				if isinstance(content, str):
+					content = content.replace(r"\[", "$$").replace(r"\]", "$$")
+                    content = content.replace(r"\(", "$").replace(r"\)", "$")
 				st.markdown(f"**{name}**: {content}")
 
 	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
