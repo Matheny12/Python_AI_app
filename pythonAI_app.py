@@ -57,12 +57,6 @@ if "username" not in st.session_state:
 username = st.session_state.username
 user_chats = all_data[username]["chats"]
 
-if username not in all_data:
-	all_data[username] = {}
-	save_data(all_data)
-
-user_chats = all_data[username]
-
 API_KEY = st.secrets.get("GEMINI_KEY")
 client = genai.Client(api_key=API_KEY)
 
