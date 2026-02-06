@@ -99,11 +99,12 @@ if "active_chat_id" not in st.session_state:
 with st.sidebar:
 	st.write(f"Logged in as: **{username.capitalize()}**")
 	if st.button("Logout"):
-		all_cookies = cookie_manager.get_all()
-		if "bartbot_user" in all_cookies:
-			cookie_manager.delete("bartbot_user")
-		for key in list(st.session_state.keys()):
-			del st.session_state.username
+		try:
+			all_cookies = cookie_manager.get_all()
+		except:
+			pass
+		st.session_state.pop("username", None)
+		st.session_state.pop("active_chat_id", None)
 		st.rerun()
 
 	st.divider()
@@ -129,7 +130,8 @@ with st.sidebar:
 				st.rerun()
 		with col2:
 			if st.button("X", key=f"del_{chat_id}", help="Delete this chat"):
-				del st.session_state.all_chats[chat_id]
+				if chat_id in user_chats:
+					del st.user_chats[chat_id]
 
 				if st.session_state.active_chat_id == chat_id:
 					st.session_state.active_chat_id = None
