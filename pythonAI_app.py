@@ -131,6 +131,8 @@ with st.sidebar:
 				save_data(st.session_state.all_chats)
 				st.rerun()
 
+
+
 st.title("BartBot")
 
 if st.session_state.active_chat_id:
@@ -146,7 +148,7 @@ if st.session_state.active_chat_id:
         	),
 			history=history_to_send
 	    )
-	for message in messages:
+	for i, message in enumerate(messages):
 		name = USER_NAME if message["role"] == "user" else BOT_NAME
 		with st.chat_message(message["role"]):
 			content = message["content"]
@@ -154,7 +156,7 @@ if st.session_state.active_chat_id:
 				base64_str = content.replace("IMAGE_DATA:", "")
 				img_bytes = base64.b64decode(base64_str)
 				st.image(img_bytes, caption=message.get("caption", ""))
-				st.download_button("Download", img_bytes, f"{message.get("caption", "")}.png", "image/png", key=uuid.uuid4().hex)
+				st.download_button("Download", img_bytes, f"{message.get("caption", "")}.png", "image/png", key=f"dl_{current_id}_{i}")
 			else:
 				st.markdown(f"**{name}**: {content}")
 
