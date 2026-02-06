@@ -197,7 +197,7 @@ if st.session_state.active_chat_id:
 
 		with col_btn:
 			if uploaded_file:
-				if st.button("Analyze", use_container_width=True, key=f"analyze_btn_{current_id}")
+				if st.button("Analyze", use_container_width=True, key=f"analyze_btn_{current_id}"):
 					st.session_state.pending_file = {
 						"bytes": uploaded_file.read(),
 						"mime": uploaded_file.type,
