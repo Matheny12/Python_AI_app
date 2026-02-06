@@ -86,7 +86,10 @@ if st.session_state.active_chat_id:
 						response = client.models.generate_images(
 							model='imagen-3.0-generate-001',
 							prompt=image_prompt,
-							config=types.GenerateImagesConfig(number_of_images=1)
+							config=types.GenerateImagesConfig(
+								number_of_images=1,
+								aspect_ratio="1:1"
+							)
 						)
 
 						generated_image = response.generated_images[0]
