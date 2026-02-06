@@ -94,17 +94,17 @@ if st.session_state.active_chat_id:
 						save_data(st.session_state.all_chats)
 				except Exception as e:
 					st.error(f"Image Error: {e}")
-
-			formatted_history = []
-			for m in messages[:-1]:
-				gemini_role = "model" if m["role"] == "assistant" else "user"
-				formatted_history.append({"role": gemini_role, "parts": [{"text": m["content"]}]})
-			try:
-				chat_session = get_chat_session(formatted_history)
-				response = chat_session.send_message(prompt)
-				st.markdown(f"**{BOT_NAME}**: {response.text}")
-				messages.append({"role": "assistant", "content": response.text})
-			except Exception as e:
-				st.error(f"Error: {e}")		
+			else:
+				formatted_history = []
+				for m in messages[:-1]:
+					gemini_role = "model" if m["role"] == "assistant" else "user"
+					formatted_history.append({"role": gemini_role, "parts": [{"text": m["content"]}]})
+				try:
+					chat_session = get_chat_session(formatted_history)
+					response = chat_session.send_message(prompt)
+					st.markdown(f"**{BOT_NAME}**: {response.text}")
+					messages.append({"role": "assistant", "content": response.text})
+				except Exception as e:
+					st.error(f"Error: {e}")		
 else:
 	st.info("Click 'Start New Chat' in the sidebar to begin!")
