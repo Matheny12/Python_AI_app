@@ -24,10 +24,13 @@ def get_logged_in_user():
 	if "username" in st.session_state:
 		return st.session_state.username
 	
-	saved_user = cookie_manager.get(cookie="bartbot_user")
-	if saved_user and saved_user in all_data:
-		st.session_state.username = saved_user
-		return saved_user
+	cookies = cookie_manager.get_all()
+	
+	if cookies:
+		saved_user = cookie_manager.get(cookie="bartbot_user")
+		if saved_user and saved_user in all_data:
+			st.session_state.username = saved_user
+			return saved_user
 	return None
 
 current_user = get_logged_in_user()
@@ -50,6 +53,11 @@ def save_data(data):
 all_data = load_data()
 
 if "username" not in st.session_state:
+	all_cookies = cookie_manager.get_all()
+	if not all_cookies and "init_waited" not in st.session_state:
+		st.session_state.init_waited = True
+		st.rerun()
+		
 	st.title("Welcome to BartBot")
 	tab1, tab2 = st.tabs(["Login", "Create Account"])
 
