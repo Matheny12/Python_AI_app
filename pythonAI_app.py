@@ -63,7 +63,7 @@ if st.session_state.active_chat_id:
         	),
 			history=history_to_send
 	    )
-	for message in st.session_state.messages:
+	for message in messages:
 		name = USER_NAME if message["role"] == "user" else BOT_NAME
 		with st.chat_message(message["role"]):
 			st.markdown(f"**{name}**: {message["content"]}")
