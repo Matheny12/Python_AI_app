@@ -69,7 +69,7 @@ if st.session_state.active_chat_id:
 			st.markdown(f"**{name}**: {message["content"]}")
 		
 	if prompt := st.chat_input("What can I help you with?"):
-		st.session_state.messages.append({"role": "user", "content": prompt})
+		messages.append({"role": "user", "content": prompt})
 		with st.chat_message("user"):
 			st.markdown(f"**{USER_NAME}**: {prompt}")
 	
