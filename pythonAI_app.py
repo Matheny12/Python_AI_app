@@ -164,24 +164,42 @@ with st.sidebar:
 
 st.title("BartBot")
 
+st.markdown("""
+	<style>
+	[data-testid="stVerticalBlock"] > div:has(div.floating-uploader) {
+		position: sticky;
+			top: 2.8rem;
+			z-index: 999;
+			background-color: rgba(255, 255, 255, 0.9);
+			padding: 10px;
+			border-radius: 10px;
+			border: 1px solid #ddd;
+			box-shadow: 0px 4px 6px rgba(0,0,0,0,1)	
+	}
+	</style>		
+""", unsafe_allow_html=True)
+
 if st.session_state.active_chat_id:
 	current_id = st.session_state.active_chat_id
 	messages = user_chats[current_id]
 
-	col_file, col_status = st.columns([0.4, 0.6])
+	with st.container():
+		st.markdown('<div class="floating-uploader"></div>', unsafe_allow_html=True)
+		col_file, col_status = st.columns([0.4, 0.6])
 
-	with col_file:
-		uploaded_file = st.file_uploader(
-			"Upload",
-			type=["pdf", "txt", "png", "jpg", "jpeg", "py", "csv"],
-			label_visibility="collapsed",
-			key=f"file_up_{st.session_state.active_chat_id}"
-		)
-
-	with col_status:
-		if uploaded_file:
-			st.info(f"{uploaded_file.name}", icon="Yes")
-	
+		with col_file:
+			uploaded_file = st.file_uploader(
+				"Upload",
+				type=["pdf", "txt", "png", "jpg", "jpeg", "py", "csv"],
+				label_visibility="collapsed",
+				key=f"sticky_up_{current_id}"
+			)
+		with col_status:
+			if uploaded_file:
+				st.info(f"{uploaded_file.name}", icon="Yes")
+			else:
+				st.caption("Ready for files.")
+		
 	def get_chat_session(history_to_send):
 		return client.chats.create(
         	model="gemini-2.5-flash-lite",
