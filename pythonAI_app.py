@@ -79,7 +79,7 @@ if st.session_state.active_chat_id:
 			gemini_role = "model" if m["role"] == "assistant" else "user"
 			formatted_history.append({"role": gemini_role, "parts": [{"text": m["content"]}]})
 		try:
-			chat_session = get_chat_session()
+			chat_session = get_chat_session(history_to_send)
 			response = chat_session.send_message(prompt)
 			st.markdown(f"**{BOT_NAME}**: {response.text}")
 			messages.append({"role": "assistant", "content": response.text})
