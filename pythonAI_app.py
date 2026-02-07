@@ -3,6 +3,7 @@ import json
 import time
 import uuid
 import base64
+import re
 import streamlit as st
 import extra_streamlit_components as stx
 from datetime import datetime, timedelta
@@ -347,11 +348,16 @@ if st.session_state.active_chat_id:
 						)
 						st.caption(f"Processing: {file_data["name"]}")
 						del st.session_state.pending_file
-
-					response = chat_session.send_message(content_to_send)
-					messages.append({"role": "assistant", "content": response.text})
-					save_data(all_data)
-					st.rerun()
+					with st.spinner("Bartholemew is thinking..."):
+						response = chat_session.send_message(content_to_send)
+						if response.text:
+							messages.append({"role": "assistant", "content": response.text})
+						else:
+							st.warning("Recieved an unexpected response format")
+						if "pending_file" in st.session_state:
+							del st.session_state.pending_file
+						save_data(all_data)
+						st.rerun()
 				except Exception as e:
 					st.error(f"Error: {e}")		
 else:
