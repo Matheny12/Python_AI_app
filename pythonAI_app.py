@@ -11,6 +11,7 @@ from google import genai
 from google.genai import types
 from PIL import Image
 from io import BytesIO
+from streamlit_paste_button import paste_image_button
 
 DB_FILE = "bartbot_history.json"
 
@@ -291,6 +292,32 @@ st.markdown("""
 if st.session_state.active_chat_id:
 	current_id = st.session_state.active_chat_id
 	messages = user_chats[current_id]
+
+	input_col, paste_col = st.columns([0.85, 0.15])
+
+	with paste_col:
+		pasted_output = paste_image_button(
+			label="Paste",
+			key=f"paste_{current_id}",
+			use_container_width=True
+		)
+	with input_col:
+		prompt = st.chat_input("What can I help you with?")
+
+	if pasted_output and pasted_output.image_data is not None:
+		img = pasted_output.image_data
+		buffered = BytesIO()
+		img.save(buffered, format="PNG")
+		img_bytes = buffered.getvalue()
+		encoded_img = base64.b64encode(img_bytes).decode('utf-8')
+		messages.append({
+			"role": "user", 
+        	"content": f"IMAGE_DATA:{encoded_img}",
+        	"caption": "Pasted Image"
+		})
+		messages.append({"role": "user", "content": "Analyze this pasted image."})
+    	save_data(all_data)
+		st.rerun()
 
 	with st.container():
 		st.markdown('<div class="floating-uploader"></div>', unsafe_allow_html=True)
