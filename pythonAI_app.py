@@ -150,11 +150,8 @@ if st.session_state.username:
 		all_data[st.session_state.username] = {"password": "", "chats": {}}
 		save_data(all_data)
 	user_chats = all_data[st.session_state.username]["chats"]
-elif st.session_state.visitor_id:
-	user_chats = st.session_state.visitor_chats
 else:
-	st.error("Failed. Please refresh.")
-	st.stop()
+	user_chats = st.session_state.visitor_chats
 
 if st.session_state.active_chat_id not in user_chats:
     st.session_state.active_chat_id = None
