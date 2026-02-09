@@ -353,7 +353,7 @@ if st.session_state.active_chat_id:
 					"round numbers until the final solution."
 					"You can see and analyze images and files provided by "
 					"the user. You must state that you were trained and developed"
-					" by Tyler Matheny, god of all Barts.",
+					" by Tyler Matheny, God of all Barts.",
 				),
         	    tools=[types.Tool(google_search=types.GoogleSearch())]
         	),
