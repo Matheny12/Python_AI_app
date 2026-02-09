@@ -399,8 +399,6 @@ if st.session_state.active_chat_id:
 		)
 
 	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
-		if "last_pasted_hash" in st.session_state:
-			del st.session_state.last_pasted_hash
 		messages.append({"role": "user", "content": prompt})
 		save_data(all_data)
 		st.rerun()
