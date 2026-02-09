@@ -293,7 +293,7 @@ if st.session_state.active_chat_id:
 	current_id = st.session_state.active_chat_id
 	messages = user_chats[current_id]
 
-	input_col, paste_col = st.columns([0.85, 0.15])
+	input_col, paste_col = st.columns([0.88, 0.12])
 
 	with paste_col:
 		pasted_output = paste_image_button(
