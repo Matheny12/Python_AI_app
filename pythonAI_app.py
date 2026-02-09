@@ -14,6 +14,29 @@ from io import BytesIO
 
 DB_FILE = "bartbot_history.json"
 
+VISITOR_SESSIONS = {}
+VISITOR_DATA_MAX_AGE = timedelta(hours=1)
+
+def is_visitor_id_in_use(visitor_id):
+	return visitor_id in VISITOR_SESSIONS and datetime.now() < VISITOR_SESSIONS[visitor_id]
+
+def cleanup_old_visitor_sessions():
+	current_time = datetime.now()
+	expired_ids = [
+		vid for vid, expiry_time in VISITOR_SESSIONS.items()
+		if current_time >= expiry_time
+	]
+	for vid in expired_ids:
+		del VISITOR_SESSIONS[vid]
+
+def generate_unique_visitor_id():
+	cleanup_old_visitor_sessions()
+	while True:
+		visitor_id = str(uuid.uuid4())[:8]
+		if not is_visitor_id_in_use(visitor_id):
+			VISITOR_SESSIONS[visitor_id] = datetime.now() + VISITOR_DATA_MAX_AGE
+			return visitor_id
+
 def load_data():
     if os.path.exists(DB_FILE):
         with open(DB_FILE,"r") as f:
@@ -55,42 +78,85 @@ all_data = load_data()
 current_user = get_logged_in_user(all_cookies, all_data)
 
 if "username" not in st.session_state:
+	st.session_state.username = None
+
+if "visitor_id" not in st.session_state:
+	st.session_state.visitor_id = None
+
+if "active_chat_id" not in st.session_state:
+	st.session_state.active_chat_id = None
+
+if "logging_out" not in st.session_state:
+	st.session_state.logging_out = False
+
+if not st.session_state.username and not st.session_state.visitor_id:
 	if not all_cookies and "init_waited" not in st.session_state:
 		st.session_state.init_waited = True
 		time.sleep(0.5)
 		st.rerun()
-	if not current_user:
-		st.title("Welcome to BartBot")
-		tab1, tab2 = st.tabs(["Login", "Create Account"])
 
-		with tab1:
-			u_login = st.text_input("Username", key="l_user")
-			p_login = st.text_input("Password", type="password", key="l_pass")
-			remember_me = st.checkbox("Keep me logged in")
+	st.title("Welcome to BartBot")
+	tab1, tab2, tab3 = st.tabs(["Login", "Create Account", "Continue as Visitor"])
 
-			if st.button("Enter BartBot"):
-				if u_login in all_data and all_data[u_login].get("password") == p_login:
-					st.session_state.username = u_login
-					if remember_me:
-						cookie_manager.set("bartbot_user", u_login, expires_at=datetime.now() + timedelta(days=30))
-						time.sleep(0.5)
-					st.rerun()
-				else:
-					st.error("Invalid username or password")
+	with tab1:
+		u_login = st.text_input("Username", key="l_user")
+		p_login = st.text_input("Password", type="password", key="l_pass")
+		remember_me = st.checkbox("Keep me logged in")
 
-		with tab2:
-			u_new = st.text_input("Choose Username", key="n_user")
-			p_new = st.text_input("Choose Password", type="password", key="n_pass")
-			if st.button("Register"):
-				if u_new in all_data:
-					st.error("Username already exists!")
-				elif u_new and p_new:
-					all_data[u_new] = {"password": p_new, "chats": {}}
-					save_data(all_data)
-					st.success("Account Created! Please login now.")
-				else:
-					st.warning("Please fill in both fields.")
-		st.stop()
+		if st.button("Enter BartBot", key="login_btn"):
+			if u_login in all_data and all_data[u_login].get("password") == p_login:
+				st.session_state.username = u_login
+				if remember_me:
+					cookie_manager.set("bartbot_user", u_login, expires_at=datetime.now() + timedelta(days=30))
+					time.sleep(0.5)
+				st.rerun()
+			else:
+				st.error("Invalid username or password")
+	with tab2:
+		u_new = st.text_input("Choose Username", key="n_user")
+		p_new = st.text_input("Choose Password", type="password", key="n_pass")
+		if st.button("Register", key="register_btn"):
+			if u_new in all_data:
+				st.error("Username already exists!")
+			elif u_new and p_new:
+				all_data[u_new] = {"password": p_new, "chats": {}}
+				save_data(all_data)
+				st.success("Account Created! Please login now.")
+			else:
+				st.warning("Please fill in both fields.")
+	with tab3:
+		st.markdown("Continue without an account. Your chats wont be saved once the tab is closed.")
+		if st.button("Get a Temporary ID", key="visitor_btn"):
+			visitor_id = generate_unique_visitor_id()
+			st.session_state.visitor_id = visitor_id
+			if "chats" not in all_data:
+				all_data["chats"] = {}
+			st.session_state.active_chat_id = str(uuid.uuid4())
+			all_data.setdefault("chats", {})[st.session_state.active_chat_id] = []
+			st.session_state.is_visitor = True
+			st.rerun()
+	st.stop()
+
+current_user_identifier = st.session_state.username if st.session_state.username else st.session_state.visitor_id
+
+if current_user_identifier and current_user_identifier not in all_data:
+	if st.session_state.username:
+		all_data[current_user_identifier] = {"password": "", "chats": {}}
+		save_data(all_data)
+
+if st.session_state.visitor_id and "active_chat_id" in st.session_state:
+	if "visitor_chats" not in st.session_state:
+		st.session_state.visitor_chats = {}
+	user_chats = st.session_state.visitor_chats
+	if st.session_state.active_chat_id not in user_chats:
+		if st.session_state.visitor_id:
+			user_chats[st.session_state.active_chat_id] = []
+elif st.session_state.username:
+	user_chats = all_data[st.session_state.username]["chats"]
+	if st.session_state.active_chat_id not in user_chats:
+		st.session_state.active_chat_id = None
+else:
+	st.error("Error determining user session.")
 
 username = st.session_state.username
 
@@ -119,13 +185,40 @@ def count_tokens(text_list):
 	return total_chars // 4
 
 with st.sidebar:
-	st.write(f"Logged in as: **{username.capitalize()}**")
-	if st.button("Logout"):
-		st.session_state.logging_out = True
-		cookie_manager.delete("bartbot_user")
-		for key in list(st.session_state.keys()):
-			if key != "logging_out":
-				del st.session_state[key]
+	if st.session_state.username:
+		st.write(f"Logged in as: **{st.session_state.username.capitalize()}**")
+		if st.button("Logout"):
+			st.session_state.logging_out = True
+			cookie_manager.delete("bartbot_user")
+			for key in list(st.session_state.keys()):
+				if key != "logging_out":
+					del st.session_state[key]
+			st.rerun()
+	elif st.session_state.visitor_id:
+		st.write(f"Visitor Mode: **{st.session_state.visitor_id}**")
+		st.warning("Your chats will not be saved.")
+		if st.button("End Visitor Session"):
+			for key in ["visitor_id", "active_chat_id", "visitor_chats", "is_visitor"]:
+				if key in st.session_state[key]
+					del st.session_state[key]
+			st.session_state.logging_out = True
+			st.rerun()
+	st.divider()
+
+	chat_ids_to_display = []
+	if st.session_state.username:
+		chat_ids_to_display = list(user_chats.keys())
+	elif st.session_state.visitor_id:
+		chat_ids_to_display = list(st.session_state.visitor_chats.keys())
+
+	if st.button("Start New Chats", use_container_width=True):
+		new_id = str(uuid.uuid4())
+		if st.session_state.username:
+			user_chats[new_id] = []
+		elif st.session_state.visitor_id:
+			st.session_state.visitor_chats[new_id] = []
+		st.session_state.active_chat_id = new_id
+		save_data(all_data)
 		st.rerun()
 
 		if st.session_state.get("active_chat_id"):
