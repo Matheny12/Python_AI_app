@@ -411,7 +411,7 @@ if st.session_state.active_chat_id:
 		img_hash = hashlib.md5(img_bytes_raw).hexdigest()
 		
 		if st.session_state.get("last_pasted_hash") != img_hash:
-			st.session_state.processed_pastes.add(img_hash)
+			st.session_state.last_pasted_hash = img_hash
 			img = pasted_output.image_data
 			buffered = BytesIO()
 			img.save(buffered, format="PNG")
