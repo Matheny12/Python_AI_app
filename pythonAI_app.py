@@ -289,7 +289,7 @@ if st.session_state.active_chat_id:
 				"Upload",
 				type=["pdf", "txt", "png", "jpg", "jpeg", "py", "csv"],
 				label_visibility="collapsed",
-				key=f"sticky_up_{current_id}"
+				key=f"right_up_{current_id}"
 			)
 
 		with col_btn:
