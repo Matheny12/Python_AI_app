@@ -316,7 +316,7 @@ if st.session_state.active_chat_id:
         	"caption": "Pasted Image"
 		})
 		messages.append({"role": "user", "content": "Analyze this pasted image."})
-    	save_data(all_data)
+		save_data(all_data)
 		st.rerun()
 
 	with st.container():
