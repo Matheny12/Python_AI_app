@@ -265,16 +265,16 @@ st.markdown("""
 	<style>
 	[data-testid="stVerticalBlock"] > div:has(div.floating-uploader) {
 		position: sticky;
-			top: 3rem;
-			z-index: 999;
-			background-color: rgba(0, 0, 0, 0.5);
-			padding: 15px;
-			border-radius: 15px;
-			border: 1px solid #444;
-			box-shadow: 0px 4px 6px rgba(0,0,0,0,1)	
-			width: 350px;
-			margin-left: auto;
-			margin-right: 0
+		top: 3rem;
+		z-index: 999;
+		background-color: rgba(0, 0, 0, 0.5);
+		padding: 15px;
+		border-radius: 15px;
+		border: 1px solid #444;
+		box-shadow: 0px 4px 6px rgba(0,0,0,0,1)	
+		width: 350px;
+		margin-left: auto;
+		margin-right: 0
 	}
 	</style>		
 """, unsafe_allow_html=True)
@@ -285,7 +285,7 @@ if st.session_state.active_chat_id:
 
 	with st.container():
 		st.markdown('<div class="floating-uploader"></div>', unsafe_allow_html=True)
-		col_file, col_btn = st.columns([0.4, 0.6])
+		col_file, col_btn = st.columns([0.5, 0.5])
 
 		with col_file:
 			uploaded_file = st.file_uploader(
