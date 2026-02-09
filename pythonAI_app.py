@@ -293,31 +293,6 @@ if st.session_state.active_chat_id:
 	current_id = st.session_state.active_chat_id
 	messages = user_chats[current_id]
 
-	input_col, paste_col = st.columns([0.88, 0.12])
-
-	with paste_col:
-		pasted_output = paste_image_button(
-			label="Paste",
-			key=f"paste_{current_id}",
-		)
-	with input_col:
-		prompt = st.chat_input("What can I help you with?")
-
-	if pasted_output and pasted_output.image_data is not None:
-		img = pasted_output.image_data
-		buffered = BytesIO()
-		img.save(buffered, format="PNG")
-		img_bytes = buffered.getvalue()
-		encoded_img = base64.b64encode(img_bytes).decode('utf-8')
-		messages.append({
-			"role": "user", 
-        	"content": f"IMAGE_DATA:{encoded_img}",
-        	"caption": "Pasted Image"
-		})
-		messages.append({"role": "user", "content": "Analyze this pasted image."})
-		save_data(all_data)
-		st.rerun()
-
 	with st.container():
 		st.markdown('<div class="floating-uploader"></div>', unsafe_allow_html=True)
 		col_file, col_btn = st.columns([0.5, 0.5])
@@ -414,8 +389,32 @@ if st.session_state.active_chat_id:
 								key=f"dl_{i}_{idx}_{current_id}"
 							)
 
+	col1, col2 = st.columns([0.85, 0.15])
+	with col2:
+		pasted_output = paste_image_button(
+            label="Paste Image", 
+            key=f"paste_{current_id}"
+		)
+
 	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
 		messages.append({"role": "user", "content": prompt})
+		save_data(all_data)
+		st.rerun()
+
+	if pasted_output and pasted_output.image_data is not None:
+		img = pasted_output.image_data
+		buffered = BytesIO()
+		img.save(buffered, format="PNG")
+		img_bytes = buffered.getvalue()
+		encoded_img = base64.b64encode(img_bytes).decode('utf-8')
+        
+		messages.append({
+            "role": "user", 
+            "content": f"IMAGE_DATA:{encoded_img}",
+            "caption": "Pasted Image"
+        })
+		
+		messages.append({"role": "user", "content": "Analyze this pasted image."})
 		save_data(all_data)
 		st.rerun()
 		
