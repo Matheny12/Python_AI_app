@@ -265,13 +265,16 @@ st.markdown("""
 	<style>
 	[data-testid="stVerticalBlock"] > div:has(div.floating-uploader) {
 		position: sticky;
-			top: 2.8rem;
+			top: 3rem;
 			z-index: 999;
 			background-color: rgba(0, 0, 0, 0.5);
-			padding: 10px;
-			border-radius: 10px;
-			border: 1px solid #ddd;
+			padding: 15px;
+			border-radius: 15px;
+			border: 1px solid #444;
 			box-shadow: 0px 4px 6px rgba(0,0,0,0,1)	
+			width: 350px;
+			margin-left: auto;
+			margin-right: 0
 	}
 	</style>		
 """, unsafe_allow_html=True)
@@ -289,7 +292,7 @@ if st.session_state.active_chat_id:
 				"Upload",
 				type=["pdf", "txt", "png", "jpg", "jpeg", "py", "csv"],
 				label_visibility="collapsed",
-				key=f"right_up_{current_id}"
+				key=f"sticky_up_{current_id}"
 			)
 
 		with col_btn:
