@@ -142,6 +142,7 @@ if not st.session_state.username and not st.session_state.visitor_id:
 			st.session_state.active_chat_id = str(uuid.uuid4())
 			st.session_state.visitor_chats[st.session_state.active_chat_id] = []
 			st.session_state.is_visitor = True
+			st.rerun()
 	st.stop()
 
 	if st.session_state.username:
