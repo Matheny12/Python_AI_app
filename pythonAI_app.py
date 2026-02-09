@@ -390,13 +390,21 @@ if st.session_state.active_chat_id:
                 ]
 				image_prompt = last_prompt[7:].strip()
 				success = False
-                
+
+				with st.spinner("Refining prompt for the artist..."):
+					refine_chat = client.chats.create(model="gemini-2.5-flash-lite")
+					refine_res = refine_chat.send_message(
+						f"Rewrite this image prompt to be a highly detailed physical description "
+            			f"WITHOUT using any proper names of people: '{image_prompt}'"
+					)
+					safe_prompt = refine_res.text
+
 				with st.spinner("Bartholemew is painting..."):
 					for model_id in model_options:
 						try:
 							response = client.models.generate_images(
                                 model=model_id,
-                                prompt=image_prompt,
+                                prompt=safe_prompt,
                                 config=types.GenerateImagesConfig(
                                     number_of_images=1,
                                     aspect_ratio="1:1",
