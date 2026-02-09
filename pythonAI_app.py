@@ -199,7 +199,7 @@ with st.sidebar:
 		st.warning("Your chats will not be saved.")
 		if st.button("End Visitor Session"):
 			for key in ["visitor_id", "active_chat_id", "visitor_chats", "is_visitor"]:
-				if key in st.session_state[key]
+				if key in st.session_state[key]:
 					del st.session_state[key]
 			st.session_state.logging_out = True
 			st.rerun()
