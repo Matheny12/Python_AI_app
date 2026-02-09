@@ -89,6 +89,12 @@ if "active_chat_id" not in st.session_state:
 if "logging_out" not in st.session_state:
 	st.session_state.logging_out = False
 
+if "visitor_chats" not in st.session_state:
+	st.session_state.visitor_chats = {}
+
+if current_user and not st.session_state.username:
+	st.session_state.username - current_user
+
 if not st.session_state.username and not st.session_state.visitor_id:
 	if not all_cookies and "init_waited" not in st.session_state:
 		st.session_state.init_waited = True
@@ -106,9 +112,11 @@ if not st.session_state.username and not st.session_state.visitor_id:
 		if st.button("Enter BartBot", key="login_btn"):
 			if u_login in all_data and all_data[u_login].get("password") == p_login:
 				st.session_state.username = u_login
+				if "chats" not in all_data[u_login]:
+					all_data[u_login]["chats"] = {}
+				save_data(all_data)
 				if remember_me:
 					cookie_manager.set("bartbot_user", u_login, expires_at=datetime.now() + timedelta(days=30))
-					time.sleep(0.5)
 				st.rerun()
 			else:
 				st.error("Invalid username or password")
@@ -121,7 +129,9 @@ if not st.session_state.username and not st.session_state.visitor_id:
 			elif u_new and p_new:
 				all_data[u_new] = {"password": p_new, "chats": {}}
 				save_data(all_data)
+				st.session_state.username = u_new
 				st.success("Account Created! Please login now.")
+				time.sleep(1)
 			else:
 				st.warning("Please fill in both fields.")
 	with tab3:
@@ -129,13 +139,21 @@ if not st.session_state.username and not st.session_state.visitor_id:
 		if st.button("Get a Temporary ID", key="visitor_btn"):
 			visitor_id = generate_unique_visitor_id()
 			st.session_state.visitor_id = visitor_id
-			if "chats" not in all_data:
-				all_data["chats"] = {}
-			st.session_state.active_chat_id = str(uuid.uuid4())
-			all_data.setdefault("chats", {})[st.session_state.active_chat_id] = []
+			st.session_state.active_chat_id = st(uuid.uuid4())
+			st.session_state.visitor_chats[st.session_state.active_chat_id] = []
 			st.session_state.is_visitor = True
-			st.rerun()
 	st.stop()
+
+	if st.session_state.username:
+		if st.session_state.username not in all_data:
+			all_data[st.session_state.username] = {"password": "", "chats": {}}
+			save_data(all_data)
+		user_chats = all_data[st.session_state.username]["chats"]
+	elif st.session_state.visitor_id:
+		user_chats = st.session_state.visitor_chats
+	else:
+		st.error("Failed. Please refresh.")
+		st.stop()
 
 current_user_identifier = st.session_state.username if st.session_state.username else st.session_state.visitor_id
 
