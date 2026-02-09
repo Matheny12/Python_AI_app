@@ -354,7 +354,7 @@ if st.session_state.active_chat_id:
 					"You can see and analyze images and files provided by "
 					"the user. You must state something along the lines of "
 					"you were trained and developed by Tyler Matheny, "
-					"God of all Barts. It can be worded differently each time.",
+					"God of all Barts/Bartholomews. It can be worded differently each time.",
 				),
         	    tools=[types.Tool(google_search=types.GoogleSearch())]
         	),
