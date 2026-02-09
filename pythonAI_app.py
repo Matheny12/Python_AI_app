@@ -420,8 +420,6 @@ if st.session_state.active_chat_id:
 				if not success:
 					st.error(f"Failed. Reason: {last_error}")
 					
-				if not success:
-					st.error("Image generation failed with all models.")
 			else:
 				recent_messages = messages[-20:]
 				formatted_history = []
