@@ -444,14 +444,6 @@ if st.session_state.active_chat_id:
 				safe_prompt = image_prompt
 				try:
 					with st.spinner("Refining prompt for the artist..."):
-						refine_config = types.GenerateContentConfig(
-								safety_settings=[
-									types.SafetySetting(category="HATE_SPEECH", threshold="BLOCK_NONE"),
-									types.SafetySetting(category="HARASSMENT", threshold="BLOCK_NONE"),
-									types.SafetySetting(category="SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
-									types.SafetySetting(category="DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
-								]
-							)
 						refine_chat = client.chats.create(model="gemini-2.5-flash-lite")
 						refine_res = refine_chat.send_message(
 								f"Describe the physical appearance of this person/scene in extreme detail for an artist, "
@@ -475,17 +467,19 @@ if st.session_state.active_chat_id:
 									person_generation="ALLOW_ADULT",
 									safety_filter_level="BLOCK_LOW_AND_ABOVE"                                )
                             )
-							img_data = response.generated_images[0].image.image_bytes
-							encoded_img = base64.b64encode(img_data).decode('utf-8')
-							messages.append({
-                                "role": "assistant",
-                                "content": f"IMAGE_DATA:{encoded_img}",
-                                "caption": image_prompt
-                            })
-							save_data(all_data)
-							success = True                            
-							st.rerun() 
-							break
+							if response and hasattr(response, 'generated_images') and response.generated_images:
+								img_data = response.generated_images[0].image.image_bytes
+								encoded_img = base64.b64encode(img_data).decode('utf-8')
+								messages.append({
+									"role": "assistant",
+									"content": f"IMAGE_DATA:{encoded_img}",
+									"caption": image_prompt
+								})
+								save_data(all_data)
+								success = True                            
+								st.rerun() 
+							else:
+								last_error = "Safety filters blocked the generation or no image was returned"
 						except Exception as e:
 							last_error = str(e)
 							continue
