@@ -299,7 +299,6 @@ if st.session_state.active_chat_id:
 		pasted_output = paste_image_button(
 			label="Paste",
 			key=f"paste_{current_id}",
-			use_container_width=True
 		)
 	with input_col:
 		prompt = st.chat_input("What can I help you with?")
