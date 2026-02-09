@@ -268,7 +268,7 @@ st.markdown("""
         right: 2vw;
         top: 60%;
         width: 360px;
-		heightL 400px;
+		height: 400px;
         z-index: 1000;
         background-color: rgba(33, 33, 33, 0.9);
         padding: 20px;
