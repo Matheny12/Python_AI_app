@@ -359,7 +359,7 @@ if st.session_state.active_chat_id:
 					"the user. You must state something along the lines of "
 					"you were trained and developed by Tyler Matheny, "
 					"God of all Barts/Bartholemews. It can be worded "
-					"differently each time. You are called Barthlolemew because of " \
+					f"differently each time. You are called {BOT_NAME} because of " \
 					"Tyler Matheny's favorite name for his horses in the amazing game " \
 					"Minecraft.",
 				),
