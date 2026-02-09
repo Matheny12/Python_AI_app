@@ -58,6 +58,9 @@ def format_math_content(text):
 	return text
 
 def get_logged_in_user(cookies_dict, data):
+	if st.session_state.get("visitor_id"):
+		return None
+	
 	if st.session_state.get("logging_out"):
 		return None
 	
@@ -170,16 +173,9 @@ elif st.session_state.username:
 else:
 	st.error("Error determining user session.")
 
-username = st.session_state.username
-
-if username not in all_data:
-	del st.session_state.username
-	st.rerun()
-
-user_chats = all_data[username]["chats"]
-
-if st.session_state.get("active_chat_id") not in user_chats:
-	st.session_state.active_chat_id = None
+if st.session_state.username and st.session_state.username not in all_data:
+    del st.session_state.username
+    st.rerun()
 
 API_KEY = st.secrets.get("GEMINI_KEY")
 client = genai.Client(api_key=API_KEY)
@@ -189,8 +185,6 @@ USER_NAME = "You"
 
 if "all_chats" not in st.session_state:
 	st.session_state.all_chats = load_data()
-if "active_chat_id" not in st.session_state:
-	st.session_state.active_chat_id = None
 
 def count_tokens(text_list):
 	total_chars = sum(len(str(m["content"]) for m in text_list if "content" in m))
