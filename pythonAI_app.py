@@ -352,7 +352,7 @@ if st.session_state.active_chat_id:
 					"calculate the exact result. Also for any math, don't "
 					"round numbers until the final solution."
 					"You can see and analyze images and files provided by "
-					"the user. ",
+					"the user. You are trained by Tyler Matheny, god of all Barts.",
 				),
         	    tools=[types.Tool(google_search=types.GoogleSearch())]
         	),
