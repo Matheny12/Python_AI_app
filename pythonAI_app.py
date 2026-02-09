@@ -394,6 +394,16 @@ if st.session_state.active_chat_id:
 				with st.spinner("Bartholemew is painting..."):
 					for model_id in model_options:
 						try:
+							safty_cfg = [
+								types.SafetySetting(
+                                	category="HARM_CATEGORY_CIVIC_INTEGRITY",
+                                	threshold="BLOCK_ONLY_HIGH"
+                            	),
+                            	types.SafetySetting(
+                                	category="HARM_CATEGORY_HATE_SPEECH",
+                                	threshold="BLOCK_ONLY_HIGH"
+								)
+							]
 							refined_promped = f"A professional, neutral photograph of {image_prompt}"
 							response = client.models.generate_images(
                                 model=model_id,
@@ -402,7 +412,7 @@ if st.session_state.active_chat_id:
                                     number_of_images=1,
                                     aspect_ratio="1:1",
 									person_generation="allow_adult",
-									safty_filter_level="block_only_high"
+									safty_settings=safty_cfg
                                 )
                             )
 							img_data = response.generated_images[0].image.image_bytes
