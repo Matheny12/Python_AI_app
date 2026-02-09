@@ -400,23 +400,32 @@ if st.session_state.active_chat_id:
 		messages.append({"role": "user", "content": prompt})
 		save_data(all_data)
 		st.rerun()
+		
+	if "processed_pastes" not in st.session_state:
+		st.session_state.processed_pastes = set()
 
 	if pasted_output and pasted_output.image_data is not None:
-		img = pasted_output.image_data
-		buffered = BytesIO()
-		img.save(buffered, format="PNG")
-		img_bytes = buffered.getvalue()
-		encoded_img = base64.b64encode(img_bytes).decode('utf-8')
-        
-		messages.append({
-            "role": "user", 
-            "content": f"IMAGE_DATA:{encoded_img}",
-            "caption": "Pasted Image"
-        })
+		import hashlib
+		img_bytes_raw = pasted_output.image_data.tobytes()
+		img_hash = hashlib.md5(img_bytes_raw).hexdigest()
 		
-		messages.append({"role": "user", "content": "Analyze this pasted image."})
-		save_data(all_data)
-		st.rerun()
+		if img_hash not in st.session_state.processed_pastes:
+			st.session_state.processed_pastes.add(img_hash)
+			img = pasted_output.image_data
+			buffered = BytesIO()
+			img.save(buffered, format="PNG")
+			img_bytes = buffered.getvalue()
+			encoded_img = base64.b64encode(img_bytes).decode('utf-8')
+			
+			messages.append({
+				"role": "user", 
+				"content": f"IMAGE_DATA:{encoded_img}",
+				"caption": "Pasted Image"
+			})
+			
+			messages.append({"role": "user", "content": "Analyze this pasted image."})
+			save_data(all_data)
+			st.rerun()
 		
 	if messages and messages[-1]["role"] == "user":	
 		last_prompt = messages[-1]["content"]
