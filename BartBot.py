@@ -361,7 +361,8 @@ if st.session_state.active_chat_id:
 					"God of all Barts/Bartholemews. It can be worded "
 					f"differently each time. You are called {BOT_NAME} because of " \
 					"Tyler Matheny's favorite name for his horses in the amazing game " \
-					"Minecraft.",				),
+					"Minecraft.",
+				),
         	    tools=[types.Tool(google_search=types.GoogleSearch())]
         	),
 			history=history_to_send
@@ -455,8 +456,7 @@ if st.session_state.active_chat_id:
 						refine_res = refine_chat.send_message(
 								"You are an artist's prompt engineer. Create a highly detailed, "
                                 "cinematic physical description of the following subject. "
-                                "IMPORTANT: Use google to find images of the person to be able to paint without having the name "
-								"then remove all names of real people, politicians, or celebrities. "
+                                "IMPORTANT: Remove all names of real people, politicians, or celebrities. "
                                 "Describe their facial features, hair, clothing, and the lighting style "
                                 f"generically so an artist can paint it without knowing who it is: '{image_prompt}'"						)
 						if refine_res.text:
