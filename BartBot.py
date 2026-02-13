@@ -475,24 +475,27 @@ if st.session_state.active_chat_id:
 			if last_prompt.lower().startswith("/image"):
 				image_prompt = last_prompt[7:].strip()
 				
-				try:
-					with st.spinner("Refining prompt for the artist..."):
-						pass
+				if type(model).__name__ == "BartBotModel":
+					st.error("Image generation is not available with BartBot. Please switch to Gemini.")
+					st.info("Tip: Use the dropdown to select 'Gemini (Cloud)' for image generation")
+				else:
+					try:
+						with st.spinner("Refining prompt for the artist..."):
+							pass
+						
+						with st.spinner("Bartholemew is painting..."):
+							img_data = model.generate_image(image_prompt)
+							encoded_img = base64.b64encode(img_data).decode('utf-8')
+							messages.append({
+								"role": "assistant",
+								"content": f"IMAGE_DATA:{encoded_img}",
+								"caption": image_prompt
+							})
+							save_data(all_data)
+							st.rerun()
 					
-					with st.spinner("Bartholemew is painting..."):
-						img_data = model.generate_image(image_prompt)
-						encoded_img = base64.b64encode(img_data).decode('utf-8')
-						messages.append({
-							"role": "assistant",
-							"content": f"IMAGE_DATA:{encoded_img}",
-							"caption": image_prompt
-						})
-						save_data(all_data)
-						st.rerun()
-				
-				except Exception as e:
-					st.error(f"Failed. Reason: {str(e)}")
-					
+					except Exception as e:
+						st.error(f"Failed. Reason: {str(e)}")					
 			else:
 				recent_messages = messages[-20:]
 				
