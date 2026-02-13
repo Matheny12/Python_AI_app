@@ -2,4 +2,8 @@ extra-streamlit-components
 streamlit
 google-genai
 streamlit-paste-button
-Pillow
+torch
+transformers
+diffusers
+accelerate
+pillow
