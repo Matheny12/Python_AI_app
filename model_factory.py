@@ -1,5 +1,6 @@
 from ai_models import AIModel
 from GeminiBartModel import GeminiModel
+from BartBotModel import BartBotModel
 import streamlit as st
 
 def get_model(model_type: str = "gemini") -> AIModel:
