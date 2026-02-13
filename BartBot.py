@@ -4,6 +4,7 @@ import time
 import uuid
 import base64
 import re
+import hashlib
 import streamlit as st
 import extra_streamlit_components as stx
 from datetime import datetime, timedelta
@@ -18,24 +19,24 @@ VISITOR_SESSIONS = {}
 VISITOR_DATA_MAX_AGE = timedelta(hours=1)
 
 def is_visitor_id_in_use(visitor_id):
-	return visitor_id in VISITOR_SESSIONS and datetime.now() < VISITOR_SESSIONS[visitor_id]
+    return visitor_id in VISITOR_SESSIONS and datetime.now() < VISITOR_SESSIONS[visitor_id]
 
 def cleanup_old_visitor_sessions():
-	current_time = datetime.now()
-	expired_ids = [
-		vid for vid, expiry_time in VISITOR_SESSIONS.items()
-		if current_time >= expiry_time
-	]
-	for vid in expired_ids:
-		del VISITOR_SESSIONS[vid]
+    current_time = datetime.now()
+    expired_ids = [
+        vid for vid, expiry_time in VISITOR_SESSIONS.items()
+        if current_time >= expiry_time
+    ]
+    for vid in expired_ids:
+        del VISITOR_SESSIONS[vid]
 
 def generate_unique_visitor_id():
-	cleanup_old_visitor_sessions()
-	while True:
-		visitor_id = str(uuid.uuid4())[:8]
-		if not is_visitor_id_in_use(visitor_id):
-			VISITOR_SESSIONS[visitor_id] = datetime.now() + VISITOR_DATA_MAX_AGE
-			return visitor_id
+    cleanup_old_visitor_sessions()
+    while True:
+        visitor_id = str(uuid.uuid4())[:8]
+        if not is_visitor_id_in_use(visitor_id):
+            VISITOR_SESSIONS[visitor_id] = datetime.now() + VISITOR_DATA_MAX_AGE
+            return visitor_id
 
 def load_data():
     if os.path.exists(DB_FILE):
@@ -47,31 +48,31 @@ def load_data():
     return {}
 
 def save_data(data):
-	with open (DB_FILE, "w") as f:
-		json.dump(data, f, indent=4)
+    with open (DB_FILE, "w") as f:
+        json.dump(data, f, indent=4)
 
 def format_math_content(text):
-	if not isinstance(text, str):
-		return text
-	text = text.replace(r"\[", "$$").replace(r"\]", "$$")
-	text = text.replace(r"\(", "$").replace(r"\)", "$")
-	return text
+    if not isinstance(text, str):
+        return text
+    text = text.replace(r"\[", "$$").replace(r"\]", "$$")
+    text = text.replace(r"\(", "$").replace(r"\)", "$")
+    return text
 
 def get_logged_in_user(cookies_dict, data):
-	if st.session_state.get("visitor_id"):
-		return None
-	
-	if st.session_state.get("logging_out"):
-		return None
-	
-	if st.session_state.get("username"):
-		return st.session_state.username
-	
-	if cookies_dict and "bartbot_user" in cookies_dict:
-		saved_user = cookies_dict["bartbot_user"]
-		if saved_user in data:
-			return saved_user
-	return None
+    if st.session_state.get("visitor_id"):
+        return None
+    
+    if st.session_state.get("logging_out"):
+        return None
+    
+    if st.session_state.get("username"):
+        return st.session_state.username
+    
+    if cookies_dict and "bartbot_user" in cookies_dict:
+        saved_user = cookies_dict["bartbot_user"]
+        if saved_user in data:
+            return saved_user
+    return None
 
 cookie_manager = stx.CookieManager(key="bartbot_cookie_manager")
 all_cookies = cookie_manager.get_all()
@@ -80,74 +81,77 @@ all_data = load_data()
 current_user = get_logged_in_user(all_cookies, all_data)
 
 if "username" not in st.session_state:
-	st.session_state.username = None
+    st.session_state.username = None
 
 if "visitor_id" not in st.session_state:
-	st.session_state.visitor_id = None
+    st.session_state.visitor_id = None
 
 if "active_chat_id" not in st.session_state:
-	st.session_state.active_chat_id = None
+    st.session_state.active_chat_id = None
 
 if "logging_out" not in st.session_state:
-	st.session_state.logging_out = False
+    st.session_state.logging_out = False
 
 if "visitor_chats" not in st.session_state:
-	st.session_state.visitor_chats = {}
+    st.session_state.visitor_chats = {}
+
+if "last_pasted_hash" not in st.session_state:
+    st.session_state.last_pasted_hash = None
 
 if current_user and not st.session_state.username and not st.session_state.visitor_id:
     st.session_state.username = current_user
 
 if not st.session_state.username and not st.session_state.visitor_id:
-	st.title("Welcome to BartBot")
-	tab1, tab2, tab3 = st.tabs(["Login", "Create Account", "Continue as Visitor"])
+    st.title("Welcome to BartBot")
+    tab1, tab2, tab3 = st.tabs(["Login", "Create Account", "Continue as Visitor"])
 
-	with tab1:
-		u_login = st.text_input("Username", key="l_user")
-		p_login = st.text_input("Password", type="password", key="l_pass")
-		remember_me = st.checkbox("Keep me logged in")
+    with tab1:
+        u_login = st.text_input("Username", key="l_user")
+        p_login = st.text_input("Password", type="password", key="l_pass")
+        remember_me = st.checkbox("Keep me logged in")
 
-		if st.button("Enter BartBot", key="login_btn"):
-			if u_login in all_data and all_data[u_login].get("password") == p_login:
-				st.session_state.username = u_login
-				if "chats" not in all_data[u_login]:
-					all_data[u_login]["chats"] = {}
-				save_data(all_data)
-				if remember_me:
-					cookie_manager.set("bartbot_user", u_login, expires_at=datetime.now() + timedelta(days=30))
-				st.rerun()
-			else:
-				st.error("Invalid username or password")
-	with tab2:
-		u_new = st.text_input("Choose Username", key="n_user")
-		p_new = st.text_input("Choose Password", type="password", key="n_pass")
-		if st.button("Register", key="register_btn"):
-			if u_new in all_data:
-				st.error("Username already exists!")
-			elif u_new and p_new:
-				all_data[u_new] = {"password": p_new, "chats": {}}
-				save_data(all_data)
-				st.session_state.username = u_new
-				st.success("Account Created! Please login now.")
-				time.sleep(1)
-			else:
-				st.warning("Please fill in both fields.")
-	with tab3:
-		st.markdown("Continue without an account. Your chats wont be saved once the tab is closed.")
-		if st.button("Get a Temporary ID", key="visitor_btn"):
-			visitor_id = generate_unique_visitor_id()
-			st.session_state.visitor_id = visitor_id
-			st.session_state.active_chat_id = str(uuid.uuid4())
-			st.session_state.visitor_chats[st.session_state.active_chat_id] = []
-			st.rerun()
-	st.stop()
+        if st.button("Enter BartBot", key="login_btn"):
+            if u_login in all_data and all_data[u_login].get("password") == p_login:
+                st.session_state.username = u_login
+                if "chats" not in all_data[u_login]:
+                    all_data[u_login]["chats"] = {}
+                save_data(all_data)
+                if remember_me:
+                    cookie_manager.set("bartbot_user", u_login, expires_at=datetime.now() + timedelta(days=30))
+                st.rerun()
+            else:
+                st.error("Invalid username or password")
+    with tab2:
+        u_new = st.text_input("Choose Username", key="n_user")
+        p_new = st.text_input("Choose Password", type="password", key="n_pass")
+        if st.button("Register", key="register_btn"):
+            if u_new in all_data:
+                st.error("Username already exists!")
+            elif u_new and p_new:
+                all_data[u_new] = {"password": p_new, "chats": {}}
+                save_data(all_data)
+                st.session_state.username = u_new
+                st.success("Account Created! Please login now.")
+                time.sleep(1)
+            else:
+                st.warning("Please fill in both fields.")
+    with tab3:
+        st.markdown("Continue without an account. Your chats wont be saved once the tab is closed.")
+        if st.button("Get a Temporary ID", key="visitor_btn"):
+            visitor_id = generate_unique_visitor_id()
+            st.session_state.visitor_id = visitor_id
+            st.session_state.active_chat_id = str(uuid.uuid4())
+            st.session_state.visitor_chats[st.session_state.active_chat_id] = []
+            st.rerun()
+    st.stop()
 
 if st.session_state.username:
-	if st.session_state.username not in all_data:
-		all_data[st.session_state.username] = {"password": "", "chats": {}}
-		save_data(all_data)
-	user_chats = all_data[st.session_state.username]["chats"]
+    if st.session_state.username not in all_data:
+        all_data[st.session_state.username] = {"password": "", "chats": {}}
+        save_data(all_data)
+    user_chats = all_data[st.session_state.username]["chats"]
 else:
-	user_chats = st.session_state.visitor_chats
+    user_chats = st.session_state.visitor_chats
 
 if st.session_state.active_chat_id and st.session_state.active_chat_id not in user_chats:
     st.session_state.active_chat_id = None
@@ -155,23 +159,23 @@ if st.session_state.active_chat_id and st.session_state.active_chat_id not in us
 current_user_identifier = st.session_state.username if st.session_state.username else st.session_state.visitor_id
 
 if current_user_identifier and current_user_identifier not in all_data:
-	if st.session_state.username:
-		all_data[current_user_identifier] = {"password": "", "chats": {}}
-		save_data(all_data)
+    if st.session_state.username:
+        all_data[current_user_identifier] = {"password": "", "chats": {}}
+        save_data(all_data)
 
 if st.session_state.visitor_id and "active_chat_id" in st.session_state:
-	if "visitor_chats" not in st.session_state:
-		st.session_state.visitor_chats = {}
-	user_chats = st.session_state.visitor_chats
-	if st.session_state.active_chat_id not in user_chats:
-		if st.session_state.visitor_id:
-			user_chats[st.session_state.active_chat_id] = []
+    if "visitor_chats" not in st.session_state:
+        st.session_state.visitor_chats = {}
+    user_chats = st.session_state.visitor_chats
+    if st.session_state.active_chat_id not in user_chats:
+        if st.session_state.visitor_id:
+            user_chats[st.session_state.active_chat_id] = []
 elif st.session_state.username:
-	user_chats = all_data[st.session_state.username]["chats"]
-	if st.session_state.active_chat_id not in user_chats:
-		st.session_state.active_chat_id = None
+    user_chats = all_data[st.session_state.username]["chats"]
+    if st.session_state.active_chat_id not in user_chats:
+        st.session_state.active_chat_id = None
 else:
-	st.error("Error determining user session.")
+    st.error("Error determining user session.")
 
 if st.session_state.username and st.session_state.username not in all_data:
     del st.session_state.username
@@ -199,126 +203,113 @@ SYSTEM_PROMPT = (
     "the user. You must state something along the lines of "
     "you were trained and developed by Tyler Matheny, "
     "God of all Barts/Bartholemews. It can be worded "
-    f"differently each time. You are called {BOT_NAME} because of "
+    "differently each time. You are called {BOT_NAME} because of "
     "Tyler Matheny's favorite name for his horses in the amazing game "
     "Minecraft."
 )
 
 if "all_chats" not in st.session_state:
-	st.session_state.all_chats = load_data()
+    st.session_state.all_chats = load_data()
 
 def count_tokens(text_list):
-	total_chars = sum(len(str(m["content"]) for m in text_list if "content" in m))
-	return total_chars // 4
+    total_chars = sum(len(str(m["content"])) for m in text_list if "content" in m)
+    return total_chars // 4
 
 with st.sidebar:
-	if st.session_state.username:
-		st.write(f"Logged in as: **{st.session_state.username.capitalize()}**")
-		
-		st.divider()
-		model_choice = st.selectbox(
-			"AI Model",
-			["GeminiBart", "BartBot"],
-			format_func=lambda x: "Gemini (Cloud)" if x == "GeminiBart" else "BartBot (Local)"
-		)
+    if st.session_state.username:
+        st.write(f"Logged in as: **{st.session_state.username.capitalize()}**")
+        
+        st.divider()
+        model_choice = st.selectbox(
+            "AI Model",
+            ["GeminiBart", "BartBot"],
+            format_func=lambda x: "Gemini (Cloud)" if x == "GeminiBart" else "BartBot (Local)"
+        )
 
-		if "current_model_type" not in st.session_state:
-			st.session_state.current_model_type = "GeminiBart"
+        if "current_model_type" not in st.session_state:
+            st.session_state.current_model_type = "GeminiBart"
 
-		if st.session_state.current_model_type != model_choice:
-			st.session_state.current_model_type = model_choice
-			st.session_state.model = get_model(model_choice)
-		
-		st.info(f"Active model: {st.session_state.current_model_type}")
-		st.caption(f"Model class: {type(st.session_state.model).__name__}")
-		st.divider()
+        if st.session_state.current_model_type != model_choice:
+            st.session_state.current_model_type = model_choice
+            st.session_state.model = get_model(model_choice)
+        
+        st.info(f"Active model: {st.session_state.current_model_type}")
+        st.caption(f"Model class: {type(st.session_state.model).__name__}")
+        st.divider()
 
-		if st.button("Logout"):
-			st.session_state.logging_out = True
-			if all_cookies and "bartbot_user" in all_cookies:
-				try:
-					cookie_manager.delete("bartbot_user")
-				except Exception:
-					pass
-			for key in list(st.session_state.keys()):
-				del st.session_state[key]
-			st.rerun()
-	elif st.session_state.visitor_id:
-		st.write(f"Visitor Mode: **{st.session_state.visitor_id}**")
-		st.warning("Your chats will not be saved.")
+        if st.button("Logout"):
+            st.session_state.logging_out = True
+            if all_cookies and "bartbot_user" in all_cookies:
+                try:
+                    cookie_manager.delete("bartbot_user")
+                except Exception:
+                    pass
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.rerun()
+    elif st.session_state.visitor_id:
+        st.write(f"Visitor Mode: **{st.session_state.visitor_id}**")
+        st.warning("Your chats will not be saved.")
 
-		st.divider()
-		model_choice = st.selectbox(
-			"AI Model",
-			["GeminiBart", "BartBot"],
-			format_func=lambda x: "Gemini (Cloud)" if x == "GeminiBart" else "BartBot (Local)"
-		)
+        st.divider()
+        model_choice = st.selectbox(
+            "AI Model",
+            ["GeminiBart", "BartBot"],
+            format_func=lambda x: "Gemini (Cloud)" if x == "GeminiBart" else "BartBot (Local)"
+        )
 
-		if "current_model_type" not in st.session_state:
-			st.session_state.current_model_type = "GeminiBart"
+        if "current_model_type" not in st.session_state:
+            st.session_state.current_model_type = "GeminiBart"
 
-		if st.session_state.current_model_type != model_choice:
-			st.session_state.current_model_type = model_choice
-			st.session_state.model = get_model(model_choice)
-			st.success(f"Switched to {model_choice}!")
-			st.rerun()
+        if st.session_state.current_model_type != model_choice:
+            st.session_state.current_model_type = model_choice
+            st.session_state.model = get_model(model_choice)
+            st.success(f"Switched to {model_choice}!")
+            st.rerun()
 
-		if st.button("End Visitor Session"):
-			keys_to_clear = ["visitor_id", "active_chat_id", "visitor_chats"]
-			for key in keys_to_clear:
-				if key in st.session_state:
-					del st.session_state[key]
-			st.rerun()
-	st.divider()
+        if st.button("End Visitor Session"):
+            keys_to_clear = ["visitor_id", "active_chat_id", "visitor_chats"]
+            for key in keys_to_clear:
+                if key in st.session_state:
+                    del st.session_state[key]
+            st.rerun()
+    st.divider()
 
-	chat_ids_to_display = []
-	if st.session_state.username:
-		chat_ids_to_display = list(user_chats.keys())
-	elif st.session_state.visitor_id:
-		chat_ids_to_display = list(st.session_state.visitor_chats.keys())
+    if st.button("Start New Chat", use_container_width=True):
+        new_id = str(uuid.uuid4())
+        if st.session_state.username:
+            user_chats[new_id] = []
+        elif st.session_state.visitor_id:
+            st.session_state.visitor_chats[new_id] = []
+        st.session_state.active_chat_id = new_id
+        save_data(all_data)
+        st.rerun()
 
-	if st.button("Start New Chat", use_container_width=True):
-		new_id = str(uuid.uuid4())
-		if st.session_state.username:
-			user_chats[new_id] = []
-		elif st.session_state.visitor_id:
-			st.session_state.visitor_chats[new_id] = []
-		st.session_state.active_chat_id = new_id
-		save_data(all_data)
-		st.rerun()
+    if st.session_state.get("active_chat_id"):
+        st.divider()
+        current_tokens = count_tokens(user_chats[st.session_state.active_chat_id])
+        st.metric("Estimated Tokens", f"{current_tokens:,}", help="Limit is 1,048,576")
+        if current_tokens > 800000:
+            st.warning("Getting close to the token limit, consider creating a new session soon.")
 
-		if st.session_state.get("active_chat_id"):
-			st.divider()
-			current_tokens = count_tokens(user_chats[st.session_state.active_chat_id])
-			st.metric("Estimated Tokens", f"{current_tokens:,}", help="Limit is 1,048,576")
-			if current_tokens > 800000:
-				st.warning("Getting close to the token limit, consider creating a new session soon.")
-
-	st.divider()
-	
-	chat_ids = list(user_chats.keys())
-
-	for chat_id in reversed(list(user_chats.keys())):
-		history = user_chats[chat_id]
-		label = history[0]["content"][:25] + "..." if history else "New Conversation"
-
-		col1, col2 = st.sidebar.columns([0.8, 0.2])
-
-		with col1:
-			if st.button(label, key=f"select_{chat_id}", use_container_width=True):
-				st.session_state.active_chat_id = chat_id
-				st.rerun()
-		with col2:
-			if st.button("X", key=f"del_{chat_id}", help="Delete this chat"):
-				if chat_id in user_chats:
-					del user_chats[chat_id]
-
-				if st.session_state.active_chat_id == chat_id:
-					st.session_state.active_chat_id = None
-				save_data(all_data)
-				st.rerun()
-
-
+    st.divider()
+    
+    for chat_id in reversed(list(user_chats.keys())):
+        history = user_chats[chat_id]
+        label = history[0]["content"][:25] + "..." if history else "New Conversation"
+        col1, col2 = st.sidebar.columns([0.8, 0.2])
+        with col1:
+            if st.button(label, key=f"select_{chat_id}", use_container_width=True):
+                st.session_state.active_chat_id = chat_id
+                st.rerun()
+        with col2:
+            if st.button("X", key=f"del_{chat_id}", help="Delete this chat"):
+                if chat_id in user_chats:
+                    del user_chats[chat_id]
+                if st.session_state.active_chat_id == chat_id:
+                    st.session_state.active_chat_id = None
+                save_data(all_data)
+                st.rerun()
 
 st.title("BartBot")
 
@@ -336,188 +327,168 @@ st.markdown("""
         border: 1px solid #444;
         box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
     }
-
-    [data-testid="stVerticalBlock"] > div:has(div.floating-uploader) [data-testid="column"] {
-        width: 100% !important;
-        flex: 1 1 auto !important;
-        min-width: 100% !important;
-    }
-    
     .stFileUploader section {
         padding: 0 !important;
     }
-    </style>        
+    </style>                
 """, unsafe_allow_html=True)
 
 if st.session_state.active_chat_id:
-	current_id = st.session_state.active_chat_id
-	messages = user_chats[current_id]
+    current_id = st.session_state.active_chat_id
+    messages = user_chats[current_id]
 
-	with st.container():
-		st.markdown('<div class="floating-uploader"></div>', unsafe_allow_html=True)
-		col_file, col_btn = st.columns([0.5, 0.5])
+    with st.container():
+        st.markdown('<div class="floating-uploader"></div>', unsafe_allow_html=True)
+        col_file, col_btn = st.columns([0.5, 0.5])
 
-		with col_file:
-			uploaded_file = st.file_uploader(
-				"Upload",
-				type=["pdf", "txt", "png", "jpg", "jpeg", "py", "csv"],
-				label_visibility="collapsed",
-				key=f"sticky_up_{current_id}"
-			)
+        with col_file:
+            uploaded_file = st.file_uploader(
+                "Upload",
+                type=["pdf", "txt", "png", "jpg", "jpeg", "py", "csv"],
+                label_visibility="collapsed",
+                key=f"sticky_up_{current_id}"
+            )
 
-		with col_btn:
-			if uploaded_file:
-				if st.button("Analyze", use_container_width=True, key=f"analyze_btn_{current_id}"):
-					file_bytes = uploaded_file.read()
-					file_mime = uploaded_file.type
-					file_name = uploaded_file.name
+        with col_btn:
+            if uploaded_file:
+                if st.button("Analyze", use_container_width=True, key=f"analyze_btn_{current_id}"):
+                    file_bytes = uploaded_file.read()
+                    file_mime = uploaded_file.type
+                    file_name = uploaded_file.name
 
-					st.session_state.pending_file = {
-						"bytes": file_bytes,
-						"mime": file_mime,
-						"name": file_name
-					}
+                    st.session_state.pending_file = {
+                        "bytes": file_bytes,
+                        "mime": file_mime,
+                        "name": file_name
+                    }
 
-					st.session_state.last_uploaded = uploaded_file.name
+                    if file_mime.startswith("image/"):
+                        encoded_img = base64.b64encode(file_bytes).decode('utf-8')
+                        messages.append({
+                            "role": "user",
+                            "content": f"IMAGE_DATA:{encoded_img}",
+                            "caption": f"Uploaded: {file_name}"
+                        })
 
-					if file_mime.startswith("image/"):
-						encoded_img = base64.b64encode(file_bytes).decode('utf-8')
-						messages.append({
-							"role": "user",
-							"content": f"IMAGE_DATA:{encoded_img}",
-							"caption": f"Uploaded: {file_name}"
-						})
+                    messages.append({"role": "user", "content": f"Analyze this file: {uploaded_file.name}"})
+                    save_data(all_data)
+                    st.rerun()
+            else:
+                st.button("Analyze", disabled=True, use_container_width=True)
 
-					messages.append({"role": "user", "content": f"Analyze this file: {uploaded_file.name}"})
-					save_data(all_data)
-					st.rerun()
-			else:
-				st.button("Analyze", disabled=True, use_container_width=True)
+    for i, message in enumerate(messages):
+        name = USER_NAME if message["role"] == "user" else BOT_NAME
+        with st.chat_message(message["role"]):
+            content = message["content"]
+            if isinstance(content, str) and content.startswith("IMAGE_DATA:"):
+                base64_str = content.replace("IMAGE_DATA:", "")
+                img_bytes = base64.b64decode(base64_str)
+                st.image(img_bytes, caption=message.get("caption", ""))
+                st.download_button(
+                    label="Download",
+                    data=img_bytes,
+                    file_name=f"bartbot_{i}.png",
+                    mime="image/png",
+                    key=f"download_btn_{current_id}_{i}"
+                )
+            else:
+                if isinstance(content, str):
+                    content = content.replace(r"\[", "$$").replace(r"\]", "$$")
+                    content = content.replace(r"\(", "$").replace(r"\)", "$")
+                    st.markdown(f"**{name}**: {content}")
+                    if "'''" in content and name == BOT_NAME:
+                        blocks = re.findall(r"'''(?:\w+)?\n(.*?)\n'''", content, re.DOTALL)
+                        for idx, block in enumerate(blocks):
+                            st.download_button(
+                                label="Download",
+                                data=block,
+                                file_name=f"edited_file_{idx+1}",
+                                mime="text/plain",
+                                key=f"dl_{i}_{idx}_{current_id}"
+                            )
 
-		if not uploaded_file and "last_uploaded" in st.session_state:
-			del st.session_state.last_uploaded
-	
-	for i, message in enumerate(messages):
-		name = USER_NAME if message["role"] == "user" else BOT_NAME
-		with st.chat_message(message["role"]):
-			content = message["content"]
-			if isinstance(content, str) and content.startswith("IMAGE_DATA:"):
-				base64_str = content.replace("IMAGE_DATA:", "")
-				img_bytes = base64.b64decode(base64_str)
-				st.image(img_bytes, caption=message.get("caption", ""))
-				st.download_button(
-					label="Download",
-					data=img_bytes,
-					file_name=f"bartbot_{i}.png",
-					mime="image/png",
-					key=f"download_btn_{current_id}_{i}"
-				)
-			else:
-				if isinstance(content, str):
-					content = content.replace(r"\[", "$$").replace(r"\]", "$$")
-					content = content.replace(r"\(", "$").replace(r"\)", "$")
-					st.markdown(f"**{name}**: {content}")
-					if "'''" in content and name == BOT_NAME:
-						import re
-						blocks = re.findall(r"'''(?:\w+)?\n(.*?)\n'''", content, re.DOTALL)
-						for idx, block in enumerate(blocks):
-							st.download_button(
-								label="Download",
-								data=block,
-								file_name=f"edited_file_{idx+1}",
-								mime="text/plain",
-								key=f"dl_{i}_{idx}_{current_id}"
-							)
-
-	col1, col2 = st.columns([0.85, 0.15])
-	with col2:
-		pasted_output = paste_image_button(
+    col1, col2 = st.columns([0.85, 0.15])
+    with col1:
+        prompt = st.chat_input("What can I help you with? For image generation, start prompt with '/image'")
+    with col2:
+        pasted_output = paste_image_button(
             label="Paste Image", 
             key=f"paste_{current_id}"
-		)
+        )
 
-	if prompt := st.chat_input("What can I help you with? For image generation, start prompt with '/image'"):
-		messages.append({"role": "user", "content": prompt})
-		save_data(all_data)
-		st.rerun()
-		
-	if pasted_output and pasted_output.image_data is not None:
-		import hashlib
-		img_bytes_raw = pasted_output.image_data.tobytes()
-		img_hash = hashlib.md5(img_bytes_raw).hexdigest()
-		
-		if st.session_state.get("last_pasted_hash") != img_hash:
-			st.session_state.last_pasted_hash = img_hash
-			img = pasted_output.image_data
-			buffered = BytesIO()
-			img.save(buffered, format="PNG")
-			img_bytes = buffered.getvalue()
-			encoded_img = base64.b64encode(img_bytes).decode('utf-8')
-		
-			messages.append({
-				"role": "user", 
-				"content": f"IMAGE_DATA:{encoded_img}",
-				"caption": "Pasted Image"
-			})
-			st.session_state.pending_file = {
-        	    "bytes": img_bytes,
-        	    "mime": "image/png",
-        	    "name": "pasted_image.png"
-        	}
-			
-			messages.append({"role": "user", "content": "Analyze this pasted image."})
-			save_data(all_data)
-			st.rerun()
-		
-	if messages and messages[-1]["role"] == "user":	
-		last_prompt = messages[-1]["content"]
-		with st.chat_message("assistant"):
-			if last_prompt.lower().startswith("/image"):
-				image_prompt = last_prompt[7:].strip()
-				
-				if type(model).__name__ == "BartBotModel":
-					st.error("Image generation is not available with BartBot. Please switch to Gemini.")
-					st.info("Tip: Use the dropdown to select 'Gemini (Cloud)' for image generation")
-				else:
-					try:
-						with st.spinner("Refining prompt for the artist..."):
-							pass
-						
-						with st.spinner("Bartholemew is painting..."):
-							img_data = model.generate_image(image_prompt)
-							encoded_img = base64.b64encode(img_data).decode('utf-8')
-							messages.append({
-								"role": "assistant",
-								"content": f"IMAGE_DATA:{encoded_img}",
-								"caption": image_prompt
-							})
-							save_data(all_data)
-							st.rerun()
-					
-					except Exception as e:
-						st.error(f"Failed. Reason: {str(e)}")					
-			else:
-				recent_messages = messages[-20:]
-				
-				try:
-					file_data = None
-					if "pending_file" in st.session_state:
-						file_data = st.session_state.pending_file
-						st.caption(f"Processing: {file_data['name']}")
-						del st.session_state.pending_file
-					
-					with st.spinner("Bartholemew is thinking..."):
-						response_text = model.generate_response(
+    if prompt:
+        messages.append({"role": "user", "content": prompt})
+        save_data(all_data)
+        st.rerun()
+        
+    if pasted_output and pasted_output.image_data is not None:
+        img_bytes_raw = pasted_output.image_data.tobytes()
+        img_hash = hashlib.md5(img_bytes_raw).hexdigest()
+        
+        if st.session_state.last_pasted_hash != img_hash:
+            st.session_state.last_pasted_hash = img_hash
+            img = pasted_output.image_data
+            buffered = BytesIO()
+            img.save(buffered, format="PNG")
+            img_bytes = buffered.getvalue()
+            encoded_img = base64.b64encode(img_bytes).decode('utf-8')
+        
+            messages.append({
+                "role": "user", 
+                "content": f"IMAGE_DATA:{encoded_img}",
+                "caption": "Pasted Image"
+            })
+            st.session_state.pending_file = {
+                "bytes": img_bytes,
+                "mime": "image/png",
+                "name": "pasted_image.png"
+            }
+            
+            messages.append({"role": "user", "content": "Analyze this pasted image."})
+            save_data(all_data)
+            st.rerun()
+        
+    if messages and messages[-1]["role"] == "user": 
+        last_prompt = messages[-1]["content"]
+        with st.chat_message("assistant"):
+            if last_prompt.lower().startswith("/image"):
+                image_prompt = last_prompt[7:].strip()
+                if type(model).__name__ == "BartBotModel":
+                    st.error("Image generation is not available with BartBot. Please switch to Gemini.")
+                else:
+                    try:
+                        with st.spinner("Bartholemew is painting..."):
+                            img_data = model.generate_image(image_prompt)
+                            encoded_img = base64.b64encode(img_data).decode('utf-8')
+                            messages.append({
+                                "role": "assistant",
+                                "content": f"IMAGE_DATA:{encoded_img}",
+                                "caption": image_prompt
+                            })
+                            save_data(all_data)
+                            st.rerun()
+                    except Exception as e:
+                        st.error(f"Failed. Reason: {str(e)}")                   
+            else:
+                recent_messages = messages[-20:]
+                try:
+                    file_data = None
+                    if "pending_file" in st.session_state:
+                        file_data = st.session_state.pending_file
+                        st.caption(f"Processing: {file_data['name']}")
+                        del st.session_state.pending_file
+                    
+                    response_text = st.write_stream(
+                        model.generate_response(
 							messages=recent_messages,
 							system_prompt=SYSTEM_PROMPT,
 							file_data=file_data
 						)
-						
-						messages.append({"role": "assistant", "content": response_text})
-						save_data(all_data)
-						st.rerun()
-				
-				except Exception as e:
-					st.error(f"Error: {e}")		
+                    )
+                    messages.append({"role": "assistant", "content": response_text})
+                    save_data(all_data)
+                    st.rerun()
+                except Exception as e:
+                	st.error(f"Error: {e}")     
 else:
-	st.info("Click 'Start New Chat' in the sidebar to begin!")
+    st.info("Click 'Start New Chat' in the sidebar to begin!")
