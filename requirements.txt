@@ -1,5 +1,5 @@
-extra-streamlit-components
 streamlit
+extra-streamlit-components
 google-genai
 streamlit-paste-button
 torch
@@ -7,3 +7,5 @@ transformers
 diffusers
 accelerate
 pillow
+sentencepiece
+protobuf
