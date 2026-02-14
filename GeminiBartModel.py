@@ -102,19 +102,19 @@ class GeminiModel(AIModel):
             )
         
         try:
-            image = PILImage.open(io.BytesIO(image_data))
+            pil_image = PILImage.open(io.BytesIO(image_data))
             
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp_file:
-                image.save(tmp_file.name, format='PNG')
+                pil_image.save(tmp_file.name, format='PNG')
                 tmp_path = tmp_file.name
             
             try:
-                uploaded_image = self.client.files.upload(file=tmp_path)
+                image_obj = types.Image.from_file(tmp_path)
                 
                 operation = self.client.models.generate_videos(
                     model="veo-3.1-fast-generate-preview",
                     prompt=prompt if prompt else "animate this image naturally with smooth motion",
-                    image=uploaded_image,
+                    image=image_obj,
                     config=types.GenerateVideosConfig(
                         aspect_ratio="16:9",
                         duration_seconds=8,
