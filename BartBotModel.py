@@ -69,8 +69,8 @@ class BartBotModel(AIModel):
     
     def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
         import time
-        import io
-        from PIL import Image as PILImage
+        import base64
+        import imghdr
         import requests
         from google import genai
         from google.genai import types
@@ -87,12 +87,21 @@ class BartBotModel(AIModel):
         
         try:
             client = genai.Client(api_key=gemini_key)
-            image = PILImage.open(io.BytesIO(image_data))
+            
+            image_type = imghdr.what(None, image_data)
+            mime_type = f"image/{image_type}" if image_type else "image/jpeg"
+            
+            encoded_image = base64.b64encode(image_data).decode('utf-8')
+            
+            image_dict = {
+                "bytesBase64Encoded": encoded_image,
+                "mimeType": mime_type
+            }
             
             operation = client.models.generate_videos(
                 model="veo-3.1-fast-generate-preview",
                 prompt=prompt if prompt else "animate this image naturally with smooth motion",
-                image=image,
+                image=image_dict,
                 config=types.GenerateVideosConfig(
                     aspect_ratio="16:9",
                     duration_seconds=8,
