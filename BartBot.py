@@ -450,46 +450,45 @@ if st.session_state.active_chat_id:
         
     if messages and messages[-1]["role"] == "user": 
         last_prompt = messages[-1]["content"]
-        with st.chat_message("assistant"):
-            if last_prompt.lower().startswith("/image"):
-                image_prompt = last_prompt[7:].strip()
-                if type(model).__name__ == "BartBotModel":
-                    st.error("Image generation is not available with BartBot. Please switch to Gemini.")
-                else:
-                    try:
-                        with st.spinner("Bartholemew is painting..."):
-                            img_data = model.generate_image(image_prompt)
-                            encoded_img = base64.b64encode(img_data).decode('utf-8')
-                            messages.append({
-                                "role": "assistant",
-                                "content": f"IMAGE_DATA:{encoded_img}",
-                                "caption": image_prompt
-                            })
-                            save_data(all_data)
-                            st.rerun()
-                    except Exception as e:
-                        st.error(f"Failed. Reason: {str(e)}")                   
+        if last_prompt.lower().startswith("/image"):
+            image_prompt = last_prompt[7:].strip()
+            if type(model).__name__ == "BartBotModel":
+                st.error("Image generation is not available with BartBot. Please switch to Gemini.")
             else:
-                recent_messages = messages[-20:]
                 try:
-                    file_data = None
-                    if "pending_file" in st.session_state:
-                        file_data = st.session_state.pending_file
-                        st.caption(f"Processing: {file_data['name']}")
-                        del st.session_state.pending_file
-                    
-                    with st.chat_message("assistant"):
-                        response_generator = model.generate_response(
-                            messages=recent_messages,
-                            system_prompt=SYSTEM_PROMPT,
-                            file_data=file_data
-                        )
-                        full_response = st.write_stream(response_generator)
-                    
-                    messages.append({"role": "assistant", "content": full_response})
-                    save_data(all_data)
-                    st.rerun()
+                    with st.spinner("Bartholemew is painting..."):
+                        img_data = model.generate_image(image_prompt)
+                        encoded_img = base64.b64encode(img_data).decode('utf-8')
+                        messages.append({
+                            "role": "assistant",
+                            "content": f"IMAGE_DATA:{encoded_img}",
+                            "caption": image_prompt
+                        })
+                        save_data(all_data)
+                        st.rerun()
                 except Exception as e:
-                    st.error(f"Error: {e}")  
+                    st.error(f"Failed. Reason: {str(e)}")                   
+        else:
+            recent_messages = messages[-20:]
+            try:
+                file_data = None
+                if "pending_file" in st.session_state:
+                    file_data = st.session_state.pending_file
+                    st.caption(f"Processing: {file_data['name']}")
+                    del st.session_state.pending_file
+                
+                with st.chat_message("assistant"):
+                    response_generator = model.generate_response(
+                        messages=recent_messages,
+                        system_prompt=SYSTEM_PROMPT,
+                        file_data=file_data
+                    )
+                    full_response = st.write_stream(response_generator)
+                    
+                messages.append({"role": "assistant", "content": full_response})
+                save_data(all_data)
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error: {e}")  
 else:
     st.info("Click 'Start New Chat' in the sidebar to begin!")
