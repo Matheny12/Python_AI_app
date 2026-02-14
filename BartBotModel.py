@@ -70,8 +70,9 @@ class BartBotModel(AIModel):
     def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
         import time
         import base64
-        import imghdr
+        import io
         import requests
+        from PIL import Image as PILImage
         from google import genai
         from google.genai import types
         import os
@@ -88,8 +89,9 @@ class BartBotModel(AIModel):
         try:
             client = genai.Client(api_key=gemini_key)
             
-            image_type = imghdr.what(None, image_data)
-            mime_type = f"image/{image_type}" if image_type else "image/jpeg"
+            image = PILImage.open(io.BytesIO(image_data))
+            image_format = image.format.lower() if image.format else 'jpeg'
+            mime_type = f"image/{image_format}"
             
             encoded_image = base64.b64encode(image_data).decode('utf-8')
             
