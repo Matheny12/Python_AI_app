@@ -1,9 +1,10 @@
 ---
 title: BartBot
 colorFrom: blue
-colorTo: purple
+colorTo: green
 sdk: streamlit
 python_version: 3.11
+sdk_version: 1.42.0
 app_file: BartBot.py
 pinned: false
 ---
