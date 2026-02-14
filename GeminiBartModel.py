@@ -72,7 +72,23 @@ class GeminiModel(AIModel):
             if operation.result and operation.result.generated_videos:
                 video_uri = operation.result.generated_videos[0].video.uri
                 return requests.get(video_uri).content
-                
+
+            if operation.result and operation.result.generated_videos:
+            video_uri = operation.result.generated_videos[0].video.uri
+            
+            if video_uri.startswith("gs://"):
+                raise Exception("Video is in private cloud storage. Switch to 'fast-generate' for direct links.")
+            
+            video_response = requests.get(
+                video_uri, 
+                headers={"x-goog-api-key": self.client.api_key} 
+            )
+            
+            if video_response.status_code == 200:
+                return video_response.content
+            else:
+                raise Exception(f"Failed to download video: {video_response.status_code}")    
             raise Exception("No video was generated.")
         except Exception as e:
             raise Exception(f"Failed to generate video: {str(e)}")
+            
