@@ -95,7 +95,7 @@ class BartBotModel(AIModel):
                 tmp_path = tmp_file.name
             
             try:
-                uploaded_image = genai.upload_file(path=tmp_path)
+                uploaded_image = client.files.upload(file=tmp_path)
                 
                 operation = client.models.generate_videos(
                     model="veo-3.1-fast-generate-preview",
@@ -132,7 +132,8 @@ class BartBotModel(AIModel):
                 
                 raise Exception("No video generated")
             finally:
-                os.unlink(tmp_path)
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
             
         except Exception as e:
             raise Exception(f"Failed to generate video: {str(e)}")
