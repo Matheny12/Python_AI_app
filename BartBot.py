@@ -61,13 +61,10 @@ def format_math_content(text):
 def get_logged_in_user(cookies_dict, data):
     if st.session_state.get("visitor_id"):
         return None
-    
     if st.session_state.get("logging_out"):
         return None
-    
     if st.session_state.get("username"):
         return st.session_state.username
-    
     if cookies_dict and "bartbot_user" in cookies_dict:
         saved_user = cookies_dict["bartbot_user"]
         if saved_user in data:
@@ -82,19 +79,14 @@ current_user = get_logged_in_user(all_cookies, all_data)
 
 if "username" not in st.session_state:
     st.session_state.username = None
-
 if "visitor_id" not in st.session_state:
     st.session_state.visitor_id = None
-
 if "active_chat_id" not in st.session_state:
     st.session_state.active_chat_id = None
-
 if "logging_out" not in st.session_state:
     st.session_state.logging_out = False
-
 if "visitor_chats" not in st.session_state:
     st.session_state.visitor_chats = {}
-
 if "last_pasted_hash" not in st.session_state:
     st.session_state.last_pasted_hash = None
 
@@ -185,7 +177,6 @@ if "model" not in st.session_state:
     st.session_state.model = get_model("GeminiBart")
 
 model = st.session_state.model
-
 BOT_NAME = "Bartholemew"
 USER_NAME = "You"
 
@@ -218,25 +209,20 @@ def count_tokens(text_list):
 with st.sidebar:
     if st.session_state.username:
         st.write(f"Logged in as: **{st.session_state.username.capitalize()}**")
-        
         st.divider()
         model_choice = st.selectbox(
             "AI Model",
             ["GeminiBart", "BartBot"],
-            format_func=lambda x: "Gemini (Cloud)" if x == "GeminiBart" else "BartBot (Local)"
+            format_func=lambda x: "GeminiBart" if x == "GeminiBart" else "BartBot"
         )
-
         if "current_model_type" not in st.session_state:
             st.session_state.current_model_type = "GeminiBart"
-
         if st.session_state.current_model_type != model_choice:
             st.session_state.current_model_type = model_choice
             st.session_state.model = get_model(model_choice)
-        
         st.info(f"Active model: {st.session_state.current_model_type}")
         st.caption(f"Model class: {type(st.session_state.model).__name__}")
         st.divider()
-
         if st.button("Logout"):
             st.session_state.logging_out = True
             if all_cookies and "bartbot_user" in all_cookies:
@@ -250,23 +236,18 @@ with st.sidebar:
     elif st.session_state.visitor_id:
         st.write(f"Visitor Mode: **{st.session_state.visitor_id}**")
         st.warning("Your chats will not be saved.")
-
         st.divider()
         model_choice = st.selectbox(
             "AI Model",
             ["GeminiBart", "BartBot"],
             format_func=lambda x: "Gemini (Cloud)" if x == "GeminiBart" else "BartBot (Local)"
         )
-
         if "current_model_type" not in st.session_state:
             st.session_state.current_model_type = "GeminiBart"
-
         if st.session_state.current_model_type != model_choice:
             st.session_state.current_model_type = model_choice
             st.session_state.model = get_model(model_choice)
-            st.success(f"Switched to {model_choice}!")
             st.rerun()
-
         if st.button("End Visitor Session"):
             keys_to_clear = ["visitor_id", "active_chat_id", "visitor_chats"]
             for key in keys_to_clear:
@@ -274,7 +255,6 @@ with st.sidebar:
                     del st.session_state[key]
             st.rerun()
     st.divider()
-
     if st.button("Start New Chat", use_container_width=True):
         new_id = str(uuid.uuid4())
         if st.session_state.username:
@@ -284,16 +264,13 @@ with st.sidebar:
         st.session_state.active_chat_id = new_id
         save_data(all_data)
         st.rerun()
-
     if st.session_state.get("active_chat_id"):
         st.divider()
         current_tokens = count_tokens(user_chats[st.session_state.active_chat_id])
         st.metric("Estimated Tokens", f"{current_tokens:,}", help="Limit is 1,048,576")
         if current_tokens > 800000:
             st.warning("Getting close to the token limit, consider creating a new session soon.")
-
     st.divider()
-    
     for chat_id in reversed(list(user_chats.keys())):
         history = user_chats[chat_id]
         label = history[0]["content"][:25] + "..." if history else "New Conversation"
@@ -312,7 +289,6 @@ with st.sidebar:
                 st.rerun()
 
 st.title("BartBot")
-
 st.markdown("""
     <style>
     [data-testid="stVerticalBlock"] > div:has(div.floating-uploader) {
@@ -336,11 +312,9 @@ st.markdown("""
 if st.session_state.active_chat_id:
     current_id = st.session_state.active_chat_id
     messages = user_chats[current_id]
-
     with st.container():
         st.markdown('<div class="floating-uploader"></div>', unsafe_allow_html=True)
         col_file, col_btn = st.columns([0.5, 0.5])
-
         with col_file:
             uploaded_file = st.file_uploader(
                 "Upload",
@@ -348,20 +322,17 @@ if st.session_state.active_chat_id:
                 label_visibility="collapsed",
                 key=f"sticky_up_{current_id}"
             )
-
         with col_btn:
             if uploaded_file:
                 if st.button("Analyze", use_container_width=True, key=f"analyze_btn_{current_id}"):
                     file_bytes = uploaded_file.read()
                     file_mime = uploaded_file.type
                     file_name = uploaded_file.name
-
                     st.session_state.pending_file = {
                         "bytes": file_bytes,
                         "mime": file_mime,
                         "name": file_name
                     }
-
                     if file_mime.startswith("image/"):
                         encoded_img = base64.b64encode(file_bytes).decode('utf-8')
                         messages.append({
@@ -369,7 +340,6 @@ if st.session_state.active_chat_id:
                             "content": f"IMAGE_DATA:{encoded_img}",
                             "caption": f"Uploaded: {file_name}"
                         })
-
                     messages.append({"role": "user", "content": f"Analyze this file: {uploaded_file.name}"})
                     save_data(all_data)
                     st.rerun()
@@ -443,14 +413,12 @@ if st.session_state.active_chat_id:
                 "mime": "image/png",
                 "name": "pasted_image.png"
             }
-            
             messages.append({"role": "user", "content": "Analyze this pasted image."})
             save_data(all_data)
             st.rerun()
         
     if messages and messages[-1]["role"] == "user": 
         last_prompt = messages[-1]["content"]
-        
         if last_prompt.lower().startswith("/image"):
             image_prompt = last_prompt[7:].strip()
             try:
@@ -467,8 +435,7 @@ if st.session_state.active_chat_id:
                         save_data(all_data)
                         st.rerun()
             except Exception as e:
-                st.error(f"Failed to generate image. Reason: {str(e)}")                   
-        
+                st.error(f"Failed to generate image. Reason: {str(e)}")                    
         else:
             recent_messages = messages[-20:]
             full_response = "" 
@@ -478,7 +445,6 @@ if st.session_state.active_chat_id:
                     file_data = st.session_state.pending_file
                     st.caption(f"Processing: {file_data['name']}")
                     del st.session_state.pending_file
-                
                 with st.chat_message("assistant"):
                     response_generator = model.generate_response(
                         messages=recent_messages,
@@ -486,13 +452,12 @@ if st.session_state.active_chat_id:
                         file_data=file_data
                     )
                     full_response = st.write_stream(response_generator)
-                
                 if full_response:
                     messages.append({"role": "assistant", "content": full_response})
                     save_data(all_data)
                     st.rerun()
                 else:
-                    st.error("The model generated an empty response. Check your console for hardware errors.")
+                    st.error("The model generated an empty response.")
             except Exception as e:
                 st.error(f"Error: {e}")  
 else:
