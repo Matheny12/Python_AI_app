@@ -55,7 +55,6 @@ class BartBotModel(AIModel):
                     guidance_scale=7.5,
                     width=512,
                     height=512,
-                    timeout=120,
                     **params
                 )
                 img_byte_arr = io.BytesIO()
