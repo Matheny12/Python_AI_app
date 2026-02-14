@@ -23,11 +23,6 @@ class GeminiModel(AIModel):
             ),
             history=formatted_history
         )
-        response_stream = chat_session.send_message_stream(content_to_send)
-        
-        for chunk in response_stream:
-            if chunk.text:
-                yield chunk.text
 
         last_prompt = messages[-1]["content"]
         content_to_send = [last_prompt]
@@ -40,11 +35,12 @@ class GeminiModel(AIModel):
                 )
             )
             
-        response = chat_session.send_message(content_to_send, stream=True)
+        response_stream = chat_session.send_message_stream(content_to_send)
         
-        for chunk in response:
+        for chunk in response_stream:
             if chunk.text:
-                yield chunk.text    
+                yield chunk.text
+
     def generate_image(self, prompt: str) -> bytes:
         safe_prompt = self._refine_prompt(prompt)
         
