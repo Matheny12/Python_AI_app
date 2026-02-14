@@ -483,7 +483,7 @@ if st.session_state.active_chat_id:
 							system_prompt=SYSTEM_PROMPT,
 							file_data=file_data
 						)
-                        full_response = st.write_stream(response_generator)	    
+                        full_response = st.write(response_generator)	    
                     messages.append({"role": "assistant", "content": full_response})
                     save_data(all_data)
                     st.rerun()            	
