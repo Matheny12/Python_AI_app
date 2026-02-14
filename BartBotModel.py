@@ -5,19 +5,18 @@ from diffusers import StableDiffusionPipeline
 import io
 import os
 import streamlit as st
-from huggingface_hub import hf_hub_download
 
 class BartBotModel(AIModel):
     @st.cache_resource
     def _get_llm(_self):
         model_name = "llama-3.2-1b-instruct-q4_k_m.gguf"
-        return GPT4ALL(model_name=model_name, allow_download=True)
+        return GPT4All(model_name=model_name, allow_download=True)
     
     def __init__(self):
         self.llm = self._get_llm()
         self.image_model = None
 
-    def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:
+    def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:        
         with self.llm.chat_session(system_prompt):
             user_input = messages[-1]["content"]   
             response_generator = self.llm.generate(
@@ -27,7 +26,7 @@ class BartBotModel(AIModel):
             )
             for token in response_generator:
                 yield token
-                
+
     def generate_image(self, prompt: str) -> bytes:
         if self.image_model is None:
             self.image_model = StableDiffusionPipeline.from_pretrained(
