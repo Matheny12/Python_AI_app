@@ -1,3 +1,5 @@
+--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
+llama-cpp-python
 streamlit
 extra-streamlit-components
 google-genai
@@ -8,6 +10,3 @@ diffusers
 accelerate
 pillow
 sentencepiece
---extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
-llama-cpp-python
-protobuf
