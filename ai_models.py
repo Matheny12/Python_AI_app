@@ -9,3 +9,7 @@ class AIModel(ABC):
     @abstractmethod
     def generate_image(self, prompt: str) -> bytes:
         pass
+    
+    @abstractmethod
+    def generate_video(self, prompt: str) -> bytes:
+        pass

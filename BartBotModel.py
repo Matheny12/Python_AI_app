@@ -28,13 +28,50 @@ class BartBotModel(AIModel):
                 yield token
 
     def generate_image(self, prompt: str) -> bytes:
-        if self.image_model is None:
-            self.image_model = StableDiffusionPipeline.from_pretrained(
-                "stabilityai/stable-diffusion-2-1",
-                use_safetensors=True
-            ).to("cpu")
+        import os
+        from huggingface_hub import InferenceClient
+        import io
+
+        hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_HUB_TOKEN")
+        if not hf_token:
+            raise Exception("HF_TOKEN not found. Please add your Hugging Face token to Streamlit secrets or environment variables for image generation.")
+
+        try:
+            client = InferenceClient(api_key=hf_token)
+            image = client.text_to_image(
+                prompt,
+                model="ByteDance/SDXL-Lightning",
+                num_inference_steps=4,
+                guidance_scale=7.5,
+                width=512,
+                height=512
+            )
+            img_byte_arr = io.BytesIO()
+            image.save(img_byte_arr, format='PNG')
+            return img_byte_arr.getvalue()
+            
+        except Exception as e:
+            raise Exception(f"Failed to generate image: {str(e)}")
+
+    def generate_video(self, prompt: str) -> bytes:
+        import os
+        from huggingface_hub import InferenceClient
         
-        image = self.image_model(prompt, num_inference_steps=15).images[0]
-        img_byte_arr = io.BytesIO()
-        image.save(img_byte_arr, format='PNG')
-        return img_byte_arr.getvalue()
+        hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_HUB_TOKEN")
+        if not hf_token:
+            raise Exception("HF_TOKEN not found. Please add your Hugging Face token to Streamlit secrets or environment variables for video generation.")
+        
+        try:
+            client = InferenceClient(api_key=hf_token)
+            video_bytes = client.text_to_video(
+                prompt,
+                model="Lightricks/LTX-Video-0.9.8-13B-distilled",
+                num_frames=121,  # ~5 seconds at 25fps
+                guidance_scale=3.0,
+                num_inference_steps=30
+            )
+            
+            return video_bytes
+            
+        except Exception as e:
+            raise Exception(f"Failed to generate video: {str(e)}")

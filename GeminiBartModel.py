@@ -86,3 +86,32 @@ class GeminiModel(AIModel):
             pass
         
         return prompt
+    
+    def generate_video(self, prompt: str) -> bytes:
+        """
+        Gemini doesn't support video generation yet via API,
+        so we'll use Hugging Face Inference API as fallback
+        """
+        import os
+        from huggingface_hub import InferenceClient
+        hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_HUB_TOKEN")
+        if not hf_token:
+            raise Exception("HF_TOKEN not found. Please add your Hugging Face token to Streamlit secrets or environment variables for video generation.")
+        
+        try:
+            client = InferenceClient(api_key=hf_token)
+
+            refined_prompt = self._refine_prompt(prompt)
+
+            video_bytes = client.text_to_video(
+                refined_prompt,
+                model="Lightricks/LTX-Video-0.9.8-13B-distilled",
+                num_frames=121,  # ~5 seconds at 25fps
+                guidance_scale=3.0,
+                num_inference_steps=30
+            )
+
+            return video_bytes
+            
+        except Exception as e:
+            raise Exception(f"Failed to generate video: {str(e)}")
