@@ -69,22 +69,35 @@ class BartBotModel(AIModel):
 
 
 
-    def generate_video(self, prompt: str) -> bytes:
+    def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
+        """
+        Generate video from an image using LTX-Video model.
+        If no image is provided, raises an error.
+        """
         import os
         from huggingface_hub import InferenceClient
+        from PIL import Image
+        import io
         
+        if not image_data:
+            raise NotImplementedError(
+                "Text-to-video is not supported. Please upload an image first, then use /video to animate it."
+            )
+
         hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_HUB_TOKEN")
         if not hf_token:
             raise Exception("HF_TOKEN not found. Please add your Hugging Face token to Streamlit secrets or environment variables for video generation.")
         
         try:
+            image = Image.open(io.BytesIO(image_data))
             client = InferenceClient(api_key=hf_token)
-            video_bytes = client.text_to_video(
-                prompt,
+            video_bytes = client.image_to_video(
+                image=image,
                 model="Lightricks/LTX-Video-0.9.8-13B-distilled",
-                num_frames=121,
-                guidance_scale=3.0,
-                num_inference_steps=30
+                prompt=prompt if prompt else "animate this image naturally",
+                num_frames=81,
+                num_inference_steps=30,
+                guidance_scale=3.0
             )
             
             return video_bytes
