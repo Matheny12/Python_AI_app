@@ -190,7 +190,7 @@ BOT_NAME = "Bartholemew"
 USER_NAME = "You"
 
 SYSTEM_PROMPT = (
-    f"Your name is {BOT_NAME}. You are a witty AI assistant."
+    f"Your name is Bartholemew. You are a witty AI assistant."
     "When performing math, always use LaTeX notation with "
     "double dollar signs for blocks and single dollar signs "
     "for inline equations. You can create and edit files. "
@@ -203,7 +203,7 @@ SYSTEM_PROMPT = (
     "the user. You must state something along the lines of "
     "you were trained and developed by Tyler Matheny, "
     "God of all Barts/Bartholemews. It can be worded "
-    "differently each time. You are called {BOT_NAME} because of "
+    "differently each time. You are called Bartholemew because of "
     "Tyler Matheny's favorite name for his horses in the amazing game "
     "Minecraft."
 )
@@ -450,16 +450,15 @@ if st.session_state.active_chat_id:
         
     if messages and messages[-1]["role"] == "user": 
         last_prompt = messages[-1]["content"]
+        
         if last_prompt.lower().startswith("/image"):
             image_prompt = last_prompt[7:].strip()
             try:
                 with st.chat_message("assistant"):
                     spinner_msg = "Bartholemew is painting locally..." if type(model).__name__ == "BartBotModel" else "Bartholemew is painting..."
-                    
                     with st.spinner(spinner_msg):
                         img_data = model.generate_image(image_prompt)
                         encoded_img = base64.b64encode(img_data).decode('utf-8')
-                        
                         messages.append({
                             "role": "assistant",
                             "content": f"IMAGE_DATA:{encoded_img}",
@@ -468,9 +467,11 @@ if st.session_state.active_chat_id:
                         save_data(all_data)
                         st.rerun()
             except Exception as e:
-                st.error(f"Failed. Reason: {str(e)}")                   
+                st.error(f"Failed to generate image. Reason: {str(e)}")                   
+        
         else:
             recent_messages = messages[-20:]
+            full_response = "" 
             try:
                 file_data = None
                 if "pending_file" in st.session_state:
@@ -485,10 +486,13 @@ if st.session_state.active_chat_id:
                         file_data=file_data
                     )
                     full_response = st.write_stream(response_generator)
-                    
-                messages.append({"role": "assistant", "content": full_response})
-                save_data(all_data)
-                st.rerun()
+                
+                if full_response:
+                    messages.append({"role": "assistant", "content": full_response})
+                    save_data(all_data)
+                    st.rerun()
+                else:
+                    st.error("The model generated an empty response. Check your console for hardware errors.")
             except Exception as e:
                 st.error(f"Error: {e}")  
 else:
