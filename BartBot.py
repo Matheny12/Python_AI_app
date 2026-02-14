@@ -240,7 +240,7 @@ with st.sidebar:
         model_choice = st.selectbox(
             "AI Model",
             ["GeminiBart", "BartBot"],
-            format_func=lambda x: "Gemini (Cloud)" if x == "GeminiBart" else "BartBot (Local)"
+            format_func=lambda x: "GeminiBart" if x == "GeminiBart" else "BartBot"
         )
         if "current_model_type" not in st.session_state:
             st.session_state.current_model_type = "GeminiBart"

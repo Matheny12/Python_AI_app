@@ -12,7 +12,7 @@ def get_model(model_type: str = "GeminiBart") -> AIModel:
     elif model_type == "BartBot":
         try:
             from BartBotModel import BartBotModel
-            return BartBotModel("mistralai/Mistral-7B-Instruct-v0.3")
+            return BartBotModel()
         except Exception as e:
             st.error(f"BartBot failed to load: {str(e)}")
             st.info("Falling back to Gemini...")
