@@ -9,7 +9,7 @@ app_file: BartBot.py
 pinned: false
 ---
 
-Check out the website for this [BartBot](https://matheny12-bartbot.hf.space)
+Check out the website for this [BartBot](https://bartbot.streamlit.app)
 
 # BartBot
 
