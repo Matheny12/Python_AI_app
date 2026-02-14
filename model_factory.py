@@ -1,4 +1,9 @@
-def get_model(model_type: str = "GeminiBart") -> AIModel:
+from ai_models import AIModel
+from GeminiBartModel import GeminiModel
+import streamlit as st
+import os
+
+def get_model(model_type: str = "GeminiBart") -> "AIModel":
     api_key = st.secrets.get("GEMINI_KEY") or os.getenv("GEMINI_KEY")
     
     if model_type == "GeminiBart":
