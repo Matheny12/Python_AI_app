@@ -7,6 +7,8 @@ import streamlit as st
 import requests
 import time
 from PIL import Image as PILImage
+from AnimateDiff import AnimateDiffGenerator, SimpleAnimateDiff
+import base64
 
 class BartBotModel(AIModel):
     @st.cache_resource
@@ -19,6 +21,7 @@ class BartBotModel(AIModel):
         self.api_key = st.secrets.get("GEMINI_KEY") or os.getenv("GEMINI_KEY")
         from google import genai
         self.client = genai.Client(api_key=self.api_key)
+        self.animatediff = None
 
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:        
         with self.llm.chat_session(system_prompt):
@@ -45,86 +48,35 @@ class BartBotModel(AIModel):
         return img_byte_arr.getvalue()
     
     def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
-        from google.genai import types
         if not image_data:
             raise ValueError("Please upload an image first.")
 
         try:
-            try:
-                img = PILImage.open(io.BytesIO(image_data))
-                img_format = img.format.lower() if img.format else 'png'
+            if self.animatediff is None:
+                print("[BartBotModel] Initializing AnimateDiff...")
+                use_simple = os.getenv("USE_SIMPLE_ANIMATEDIFF", "true").lower() == "true"
                 
-                print(f"[DEBUG] Image format detected: {img_format}, Size: {img.size}")
-                
-                mime_type_map = {
-                    'jpeg': 'image/jpeg',
-                    'jpg': 'image/jpeg',
-                    'png': 'image/png',
-                    'gif': 'image/gif',
-                    'webp': 'image/webp'
-                }
-                mime_type = mime_type_map.get(img_format, 'image/png')
-                
-                if img.mode not in ('RGB', 'RGBA'):
-                    print(f"[DEBUG] Converting image from {img.mode} to RGB")
-                    img = img.convert('RGB')
-                    buffered = io.BytesIO()
-                    img.save(buffered, format='JPEG')
-                    image_data = buffered.getvalue()
-                    mime_type = 'image/jpeg'
-                
-                print(f"[DEBUG] Final MIME type: {mime_type}, Data size: {len(image_data)} bytes")
-                
-            except Exception as e:
-                print(f"[ERROR] Image processing failed: {str(e)}")
-                mime_type = "image/png"
+                if use_simple:
+                    self.animatediff = SimpleAnimateDiff()
+                    print("[BartBotModel] Using SimpleAnimateDiff (faster)")
+                else:
+                    self.animatediff = AnimateDiffGenerator()
+                    print("[BartBotModel] Using AnimateDiffGenerator (better quality)")
             
-            print(f"[DEBUG] Starting video generation with prompt: '{prompt}'")
-            operation = self.client.models.generate_videos(
-                model="veo-3.1-fast-generate-preview",
-                prompt=prompt or "animate this image naturally with subtle movement",
-                image=types.Image(image_bytes=image_data, mime_type=mime_type),
-                config=types.GenerateVideosConfig(
-                    resolution="720p",
-                    duration_seconds=8
-                )
+            print(f"[BartBotModel] Starting local video generation")
+            print(f"[BartBotModel] Prompt: '{prompt}'")
+            
+            num_frames = int(os.getenv("ANIMATEDIFF_FRAMES", "16"))
+            fps = int(os.getenv("ANIMATEDIFF_FPS", "8"))
+            
+            video_data = self.animatediff.generate_from_image(
+                image_data=image_data,
+                prompt=prompt if prompt else "smooth subtle motion, high quality",
+                num_frames=num_frames,
+                fps=fps
             )
-
-            print(f"[DEBUG] Operation started: {operation.name}")
             
-            max_wait_time = 300
-            start_time = time.time()
-            poll_count = 0
-            
-            while not operation.done:
-                if time.time() - start_time > max_wait_time:
-                    raise Exception(f"Video generation timed out after {max_wait_time} seconds")
-                
-                time.sleep(5)
-                operation = self.client.operations.get(operation)
-                poll_count += 1
-                elapsed = int(time.time() - start_time)
-                print(f"[DEBUG] Poll #{poll_count}, Elapsed: {elapsed}s, Done: {operation.done}")
-            
-            print(f"[DEBUG] Operation completed after {poll_count} polls")
-            
-            if not operation.result:
-                raise Exception("Operation completed but no result was returned")
-            
-            if not operation.result.generated_videos:
-                raise Exception("Operation completed but no videos were generated")
-            
-            uri = operation.result.generated_videos[0].video.uri
-            print(f"[DEBUG] Video URI: {uri}")
-            
-            headers = {
-                'x-goog-api-key': self.api_key
-            }
-            video_response = requests.get(uri, headers=headers, timeout=60)
-            video_response.raise_for_status()
-            video_data = video_response.content
-            
-            print(f"[DEBUG] Video downloaded: {len(video_data)} bytes")
+            print(f"[BartBotModel] Video generated: {len(video_data)} bytes")
             
             if len(video_data) < 1000:
                 raise Exception(f"Video file is too small ({len(video_data)} bytes), likely corrupted")

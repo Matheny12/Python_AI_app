@@ -10,3 +10,6 @@ accelerate
 pillow
 sentencepiece
 huggingface_hub
+safetensors
+imageio
+imageio-ffmpeg
