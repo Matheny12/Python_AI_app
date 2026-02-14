@@ -23,7 +23,12 @@ class GeminiModel(AIModel):
             ),
             history=formatted_history
         )
+        response_stream = chat_session.send_message_stream(content_to_send)
         
+        for chunk in response_stream:
+            if chunk.text:
+                yield chunk.text
+
         last_prompt = messages[-1]["content"]
         content_to_send = [last_prompt]
         
