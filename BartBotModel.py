@@ -1,7 +1,7 @@
 from ai_models import AIModel
 from typing import List, Dict, Optional, Generator
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer
+from transformers import AutoModelForCausalLM, AutoTokenizer, TextIteratorStreamer, BitsAndBytesConfig
 from diffusers import StableDiffusionPipeline
 from PIL import Image
 import io
