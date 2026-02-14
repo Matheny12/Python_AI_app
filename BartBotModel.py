@@ -11,12 +11,11 @@ class BartBotModel(AIModel):
         model_name = "Llama-3.2-1B-Instruct-Q4_0.gguf"
         return GPT4All(model_name=model_name, allow_download=True)
     
-    def __init__(self):
+def __init__(self):
         self.llm = self._get_llm()
-        self.image_model = None
-        gemini_key = os.getenv("GEMINI_KEY") or st.secrets.get("GEMINI_KEY")
+        api_key = os.getenv("GEMINI_KEY") or st.secrets.get("GEMINI_KEY")
         from google import genai
-        self.client = genai.Client(api_key=gemini_key)
+        self.client = genai.Client(api_key=api_key)
 
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:        
         with self.llm.chat_session(system_prompt):
@@ -71,39 +70,26 @@ class BartBotModel(AIModel):
         raise Exception(f"Failed to generate image after trying multiple models. Last error: {last_error}")
     
 def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
-    import time
-    from google.genai import types
-    
-    if not image_data:
-        raise ValueError("Please upload an image first to animate it.")
+        from google.genai import types
+        import time
+        import requests
 
-    client_to_use = getattr(self, 'client', None)
-    if not client_to_use:
-        from google import genai
-        api_key = os.getenv("GEMINI_KEY") or st.secrets.get("GEMINI_KEY")
-        client_to_use = genai.Client(api_key=api_key)
+        if not image_data:
+            raise ValueError("Please upload an image first.")
 
-    try:
-        operation = client_to_use.models.generate_videos(
-            model="veo-3.1-fast-generate-preview",
-            prompt=prompt if prompt else "animate this image naturally",
-            image=types.Image(data=image_data, mime_type="image/png"),
-            config=types.GenerateVideosConfig(
-                aspect_ratio="16:9",
-                duration_seconds=8,
-                resolution="720p"
+        try:
+            # FIX: Use types.Image(data=...) to avoid the positional argument error
+            operation = self.client.models.generate_videos(
+                model="veo-3.1-fast-generate-preview",
+                prompt=prompt or "animate this",
+                image=types.Image(data=image_data, mime_type="image/png"),
+                config=types.GenerateVideosConfig(resolution="720p")
             )
-        )
 
-        while not operation.done:
-            time.sleep(5)
-            operation = client_to_use.operations.get(operation)
-        
-        if operation.result and operation.result.generated_videos:
-            import requests
-            video_uri = operation.result.generated_videos[0].video.uri
-            return requests.get(video_uri).content
+            while not operation.done:
+                time.sleep(5)
+                operation = self.client.operations.get(operation)
             
-        raise Exception("Video generation failed to return a result.")
-    except Exception as e:
-        raise Exception(f"Failed to generate video: {str(e)}")
+            return requests.get(operation.result.generated_videos[0].video.uri).content
+        except Exception as e:
+            raise Exception(f"Video generation failed: {e}")
