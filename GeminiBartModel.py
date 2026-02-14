@@ -125,7 +125,10 @@ class GeminiModel(AIModel):
             video_uri = operation.result.generated_videos[0].video.uri
             print(f"[DEBUG] Video URI: {video_uri}")
             
-            video_response = requests.get(video_uri, timeout=60)
+            headers = {
+                'x-goog-api-key': self.api_key
+            }
+            video_response = requests.get(video_uri, headers=headers, timeout=60)
             video_response.raise_for_status()
             video_data = video_response.content
             

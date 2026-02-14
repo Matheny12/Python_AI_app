@@ -117,7 +117,10 @@ class BartBotModel(AIModel):
             uri = operation.result.generated_videos[0].video.uri
             print(f"[DEBUG] Video URI: {uri}")
             
-            video_response = requests.get(uri, timeout=60)
+            headers = {
+                'x-goog-api-key': self.api_key
+            }
+            video_response = requests.get(uri, headers=headers, timeout=60)
             video_response.raise_for_status()
             video_data = video_response.content
             
