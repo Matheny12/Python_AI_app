@@ -306,6 +306,28 @@ st.markdown("""
     .stFileUploader section {
         padding: 0 !important;
     }
+    
+    [data-testid="stSidebar"] {
+        position: fixed !important;
+        height: 100vh !important;
+        overflow-y: auto !important;
+    }
+    
+    [data-testid="stSidebar"] > div:first-child {
+        position: sticky !important;
+        top: 0 !important;
+        height: 100vh !important;
+        overflow-y: auto !important;
+    }
+    
+    .stChatInputContainer textarea {
+        min-height: 100px !important;
+        height: 100px !important;
+    }
+    
+    .stChatInput {
+        min-height: 120px !important;
+    }
     </style>                
 """, unsafe_allow_html=True)
 
