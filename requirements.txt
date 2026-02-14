@@ -2,12 +2,12 @@ streamlit
 extra-streamlit-components
 google-genai
 streamlit-paste-button
-torch
+torch --index-url https://download.pytorch.org/whl/cpu
 transformers
 diffusers
 accelerate
 pillow
 sentencepiece
-protobuf
-bitsandbytes
+--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cpu
 llama-cpp-python
+protobuf
