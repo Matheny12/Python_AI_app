@@ -7,8 +7,14 @@ import streamlit as st
 import requests
 import time
 from PIL import Image as PILImage
-from AnimateDiff import AnimateDiffGenerator, SimpleAnimateDiff
 import base64
+
+try:
+    from AnimateDiff import AnimateDiffGenerator, SimpleAnimateDiff
+    ANIMATEDIFF_AVAILABLE = True
+except ImportError as e:
+    ANIMATEDIFF_AVAILABLE = False
+    print(f"[WARNING] AnimateDiff not available: {e}")
 
 class BartBotModel(AIModel):
     @st.cache_resource
@@ -50,6 +56,11 @@ class BartBotModel(AIModel):
     def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
         if not image_data:
             raise ValueError("Please upload an image first.")
+
+        if not ANIMATEDIFF_AVAILABLE:
+            raise Exception(
+                "AnimateDiff is not available. Video generation requires AnimateDiff.py and dependencies."
+            )
 
         try:
             if self.animatediff is None:

@@ -13,3 +13,4 @@ huggingface_hub
 safetensors
 imageio
 imageio-ffmpeg
+replicate

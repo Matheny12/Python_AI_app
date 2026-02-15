@@ -8,8 +8,15 @@ import requests
 import os
 from io import BytesIO
 from PIL import Image as PILImage
-from AnimateDiff import AnimateDiffGenerator, SimpleAnimateDiff
 import base64
+
+try:
+    from AnimateDiff import AnimateDiffGenerator, SimpleAnimateDiff
+    ANIMATEDIFF_AVAILABLE = True
+except ImportError as e:
+    ANIMATEDIFF_AVAILABLE = False
+    print(f"[WARNING] AnimateDiff not available: {e}")
+    print("[WARNING] Video generation will not work without AnimateDiff or falling back to API")
 
 class GeminiModel(AIModel):
     def __init__(self, api_key: str, bot_name: str = "Bartholemew"):
@@ -17,7 +24,7 @@ class GeminiModel(AIModel):
         self.api_key = api_key
         self.bot_name = bot_name
         self.animatediff = None
-
+    
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None):
         formatted_history = []
         for m in messages[:-1]:
@@ -62,6 +69,17 @@ class GeminiModel(AIModel):
     def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
         if not image_data:
             raise ValueError("Please upload an image first to animate it.")
+
+        if not ANIMATEDIFF_AVAILABLE:
+            raise Exception(
+                "AnimateDiff is not available. This could be because:\n"
+                "1. AnimateDiff.py file is missing\n"
+                "2. Required dependencies are not installed (torch, diffusers)\n"
+                "3. Running on Streamlit Cloud (doesn't support local GPU models)\n\n"
+                "Solutions:\n"
+                "- For local use: Install dependencies and ensure AnimateDiff.py is present\n"
+                "- For Streamlit Cloud: Use a cloud API service like Replicate instead"
+            )
 
         try:
             if self.animatediff is None:

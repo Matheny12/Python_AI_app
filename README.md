@@ -32,3 +32,5 @@ Just start chatting! Use /image prefix for image generation.
 - Google Gemini API
 - PyTorch + Transformers
 - Stable Diffusion
+- AnimateDiff
+- Hugging Face
