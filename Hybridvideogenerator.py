@@ -53,24 +53,29 @@ class HybridVideoGenerator:
             print("Forced to use REPLICATE (cloud)")
             return
         
+        if REPLICATE_AVAILABLE:
+            self.method = "replicate"
+            print("Using REPLICATE (fast, works everywhere)")
+            print("To use local AnimateDiff, set FORCE_VIDEO_METHOD=local")
+            return
+        
         if ANIMATEDIFF_AVAILABLE:
             try:
                 import torch
                 if torch.cuda.is_available():
                     self.method = "local"
-                    print("GPU detected! Using LOCAL AnimateDiff (unlimited & free)")
+                    print("GPU detected! Using LOCAL AnimateDiff")
+                    print("Note: First run will download ~5GB models (slow)")
                     return
                 else:
-                    print("No GPU detected. AnimateDiff would be very slow on CPU.")
+                    print("WARNING: No GPU and no Replicate - AnimateDiff will be VERY slow")
+                    self.method = "local"
+                    return
             except:
                 pass
         
-        if REPLICATE_AVAILABLE:
-            self.method = "replicate"
-            print("Using REPLICATE (cloud API - paid)")
-        else:
-            self.method = None
-            print("ERROR: No video generation method available!")
+        self.method = None
+        print("ERROR: No video generation method available!")
     
     def generate_video(self, image_data: bytes, prompt: str = None) -> bytes:
         """Generate video using best available method"""
@@ -116,12 +121,13 @@ class HybridVideoGenerator:
             raise
     
     def _generate_replicate(self, image_data: bytes, prompt: str) -> bytes:
+        """Generate using Replicate API"""
         try:
             api_token = st.secrets.get("REPLICATE_API_TOKEN") or os.getenv("REPLICATE_API_TOKEN")
             if not api_token:
                 raise ValueError("REPLICATE_API_TOKEN not found in secrets or environment")
             
-            os.environ["ecr"] = api_token
+            os.environ["REPLICATE_API_TOKEN"] = api_token
             
             img = PILImage.open(BytesIO(image_data))
             if img.mode not in ('RGB', 'RGBA'):
