@@ -202,20 +202,20 @@ class LTX2VideoGenerator:
             if img.mode not in ('RGB', 'RGBA'):
                 img = img.convert('RGB')
             
-            max_dimension = 1024
+            max_dimension = 512
             if max(img.size) > max_dimension:
                 ratio = max_dimension / max(img.size)
                 new_size = (int(img.size[0] * ratio), int(img.size[1] * ratio))
                 img = img.resize(new_size, PILImage.Resampling.LANCZOS)
-                print(f"[LTX Video API] Resized image to {new_size} to reduce payload size")
+                print(f"[LTX Video API] Resized image to {new_size}")
             
             buffered = BytesIO()
-            img.save(buffered, format="JPEG", quality=75, optimize=True)
+            img.save(buffered, format="JPEG", quality=70, optimize=True)
             img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
             image_uri = f"data:image/jpeg;base64,{img_base64}"
             
             payload_size_mb = len(img_base64) / (1024 * 1024)
-            print(f"[LTX Video API] Image payload size: {payload_size_mb:.2f} MB")
+            print(f"[LTX Video API] Payload size: {payload_size_mb:.2f} MB")
             
             api_url = "https://api.ltx.video/v1/image-to-video"
             headers = {
