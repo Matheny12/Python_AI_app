@@ -67,7 +67,7 @@ class GeminiModel(AIModel):
             prompt=prompt,
             config=types.GenerateImagesConfig(
                 number_of_images=1,
-                safety_filter_level="block_only_high",
+                safety_filter_level="block_low_and_above",
                 person_generation="allow_adult"
             )
         )
