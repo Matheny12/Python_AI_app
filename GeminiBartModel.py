@@ -56,7 +56,7 @@ class GeminiModel(AIModel):
 
     def generate_image(self, prompt: str) -> bytes:
         response = self.client.models.generate_images(
-            model="imagen-3.0-generate-001",
+            model="imagen-3.0-generate-002",
             prompt=prompt,
             number_of_images=1,
             aspect_ratio="1:1",
