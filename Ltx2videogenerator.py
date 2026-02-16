@@ -1,6 +1,8 @@
 """
 LTX-2 Video Generator with Audio Support
 Supports both Replicate and direct LTX-2 API
+
+VERSION: 2025-02-16-v2 (FIXED - Forces Direct LTX API)
 """
 
 import os
@@ -18,7 +20,7 @@ except ImportError:
 
 try:
     import replicate
-    REPLICATE_AVAILABLE = True
+    REPLICATE_AVAILABLE = False
 except ImportError:
     REPLICATE_AVAILABLE = False
 
@@ -44,6 +46,11 @@ class LTX2VideoGenerator:
     
     def _detect_method(self, force_method=None):
         """Detect which API to use"""
+        
+        print("=" * 60)
+        print("[LTX DEBUG] Method detection starting...")
+        print(f"[LTX DEBUG] force_method parameter: {force_method}")
+        print(f"[LTX DEBUG] REPLICATE_AVAILABLE: {REPLICATE_AVAILABLE}")
         
         if force_method:
             print(f"[LTX] Forced method: {force_method}")
@@ -87,6 +94,7 @@ class LTX2VideoGenerator:
             return "replicate"
         
         print("[LTX] Defaulting to direct method")
+        print("=" * 60)
         return "direct"
     
     def generate_video(self, image_data: bytes, prompt: str = None) -> bytes:

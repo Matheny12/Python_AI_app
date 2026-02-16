@@ -16,7 +16,9 @@ class GeminiModel(AIModel):
         self.client = genai.Client(api_key=api_key)
         self.api_key = api_key
         self.bot_name = bot_name
+        print("[GeminiBartModel] Initializing video generator with FORCED direct method...")
         self.video_generator = LTX2VideoGenerator(force_method="direct")
+        print(f"[GeminiBartModel] Video generator method is: {self.video_generator.method}")
     
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None):
         formatted_history = []
