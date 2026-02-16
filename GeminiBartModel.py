@@ -55,11 +55,15 @@ class GeminiModel(AIModel):
             yield chunk.text
 
     def generate_image(self, prompt: str) -> bytes:
-        response = self.client.models.generate_content(
-            model="imagen-4.0-generate-001",
-            contents=f"Generate a high-quality image of: {prompt}"
+        response = self.client.models.generate_images(
+            model="imagen-3.0-generate-001",
+            prompt=prompt,
+            number_of_images=1,
+            aspect_ratio="1:1",
+            safety_filter_level="block_only_high",
+            person_generation="allow_adult"
         )
-        return response.generated_images[0].image_bytes
+        return response.generated_images[0].image.data
 
     def generate_video(self, prompt: str, image_data: bytes = None) -> bytes:
         if not image_data:
