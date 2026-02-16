@@ -8,13 +8,7 @@ import requests
 import time
 from PIL import Image as PILImage
 import base64
-
-try:
-    from AnimateDiff import AnimateDiffGenerator, SimpleAnimateDiff
-    ANIMATEDIFF_AVAILABLE = True
-except ImportError as e:
-    ANIMATEDIFF_AVAILABLE = False
-    print(f"[WARNING] AnimateDiff not available: {e}")
+from Hybridvideogenerator import Hybridvideogenerator
 
 class BartBotModel(AIModel):
     @st.cache_resource
@@ -27,7 +21,7 @@ class BartBotModel(AIModel):
         self.api_key = st.secrets.get("GEMINI_KEY") or os.getenv("GEMINI_KEY")
         from google import genai
         self.client = genai.Client(api_key=self.api_key)
-        self.animatediff = None
+        self.video_generator = Hybridvideogenerator()
 
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:        
         with self.llm.chat_session(system_prompt):
@@ -57,40 +51,17 @@ class BartBotModel(AIModel):
         if not image_data:
             raise ValueError("Please upload an image first.")
 
-        if not ANIMATEDIFF_AVAILABLE:
-            raise Exception(
-                "AnimateDiff is not available. Video generation requires AnimateDiff.py and dependencies."
-            )
-
         try:
-            if self.animatediff is None:
-                print("[BartBotModel] Initializing AnimateDiff...")
-                use_simple = os.getenv("USE_SIMPLE_ANIMATEDIFF", "true").lower() == "true"
-                
-                if use_simple:
-                    self.animatediff = SimpleAnimateDiff()
-                    print("[BartBotModel] Using SimpleAnimateDiff (faster)")
-                else:
-                    self.animatediff = AnimateDiffGenerator()
-                    print("[BartBotModel] Using AnimateDiffGenerator (better quality)")
-            
-            print(f"[BartBotModel] Starting local video generation")
+            print(f"[BartBotModel] Starting video generation")
+            print(f"[BartBotModel] Method: {self.video_generator.method}")
             print(f"[BartBotModel] Prompt: '{prompt}'")
             
-            num_frames = int(os.getenv("ANIMATEDIFF_FRAMES", "16"))
-            fps = int(os.getenv("ANIMATEDIFF_FPS", "8"))
-            
-            video_data = self.animatediff.generate_from_image(
-                image_data=image_data,
-                prompt=prompt if prompt else "smooth subtle motion, high quality",
-                num_frames=num_frames,
-                fps=fps
-            )
+            video_data = self.video_generator.generate_video(image_data, prompt)
             
             print(f"[BartBotModel] Video generated: {len(video_data)} bytes")
             
             if len(video_data) < 1000:
-                raise Exception(f"Video file is too small ({len(video_data)} bytes), likely corrupted")
+                raise Exception(f"Video file is too small ({len(video_data)} bytes)")
             
             return video_data
             
