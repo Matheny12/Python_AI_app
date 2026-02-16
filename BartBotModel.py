@@ -23,7 +23,29 @@ class BartBotModel(AIModel):
         self.client = genai.Client(api_key=self.api_key)
         self.video_generator = HybridVideoGenerator()
 
-    def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:        
+    def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:
+        if file_data:
+            print("[BartBotModel] File detected, using Gemini for vision")
+            from google.genai import types
+            
+            file_bytes = file_data.get('data') or file_data.get('bytes')
+            file_mime = file_data.get('type') or file_data.get('mime')
+            
+            if file_bytes and file_mime:
+                try:
+                    response = self.client.models.generate_content(
+                        model="gemini-2.0-flash",
+                        contents=[
+                            messages[-1]["content"],
+                            types.Part.from_bytes(data=file_bytes, mime_type=file_mime)
+                        ]
+                    )
+                    yield response.text
+                    return
+                except Exception as e:
+                    yield f"Error analyzing image: {str(e)}"
+                    return
+        
         with self.llm.chat_session(system_prompt):
             user_input = messages[-1]["content"]   
             response_generator = self.llm.generate(
