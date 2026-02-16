@@ -50,7 +50,7 @@ class GeminiModel(AIModel):
                     mime_type=file_mime
                 ))
 
-        response = chat_session.send_message(content_to_send, stream=True)
+        response = chat_session.send_message(content_to_send)
         for chunk in response:
             yield chunk.text
 
