@@ -9,14 +9,14 @@ import os
 from io import BytesIO
 from PIL import Image as PILImage
 import base64
-from Hybridvideogenerator import HybridVideoGenerator
+from LTX2videogenerator import LTX2VideoGenerator
 
 class GeminiModel(AIModel):
     def __init__(self, api_key: str, bot_name: str = "Bartholemew"):
         self.client = genai.Client(api_key=api_key)
         self.api_key = api_key
         self.bot_name = bot_name
-        self.video_generator = HybridVideoGenerator()
+        self.video_generator = LTX2VideoGenerator()
     
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None):
         formatted_history = []

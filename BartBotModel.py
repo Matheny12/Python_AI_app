@@ -8,7 +8,7 @@ import requests
 import time
 from PIL import Image as PILImage
 import base64
-from Hybridvideogenerator import HybridVideoGenerator
+from LTX2videogenerator import LTX2VideoGenerator
 
 class BartBotModel(AIModel):
     @st.cache_resource
@@ -25,7 +25,7 @@ class BartBotModel(AIModel):
         
         from google import genai
         self.client = genai.Client(api_key=self.api_key)
-        self.video_generator = HybridVideoGenerator()
+        self.video_generator = LTX2VideoGenerator()
 
     def generate_response(self, messages: List[Dict], system_prompt: str, file_data: Optional[Dict] = None) -> Generator:
         if file_data:
