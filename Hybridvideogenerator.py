@@ -133,7 +133,7 @@ class HybridVideoGenerator:
         """Generate using Replicate API"""
         try:
             if STREAMLIT_AVAILABLE:
-                api_token = st.secrets.get("REPLICATE_API_TOKEN") or os.getenv("REPLICATE_API_TOKEN")
+                api_token = st.secrets["REPLICATE_API_TOKEN"] or os.getenv("REPLICATE_API_TOKEN")
             else:
                 api_token = os.getenv("REPLICATE_API_TOKEN")
             
