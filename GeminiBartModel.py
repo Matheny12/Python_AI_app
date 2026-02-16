@@ -9,7 +9,7 @@ import os
 from io import BytesIO
 from PIL import Image as PILImage
 import base64
-from LTX2videogenerator import LTX2VideoGenerator
+from Ltx2videogenerator import LTX2VideoGenerator
 
 class GeminiModel(AIModel):
     def __init__(self, api_key: str, bot_name: str = "Bartholemew"):

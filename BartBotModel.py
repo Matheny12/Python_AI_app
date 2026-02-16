@@ -8,7 +8,7 @@ import requests
 import time
 from PIL import Image as PILImage
 import base64
-from LTX2videogenerator import LTX2VideoGenerator
+from Ltx2videogenerator import LTX2VideoGenerator
 
 class BartBotModel(AIModel):
     @st.cache_resource
