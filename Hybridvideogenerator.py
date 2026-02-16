@@ -83,36 +83,63 @@ class HybridVideoGenerator:
         return self._generate_simple_animation(image_data)
     
     def _generate_huggingface(self, image_data: bytes) -> bytes:
-        """Try HuggingFace Inference API (FREE, no token)"""
+        """Try HuggingFace Inference API (FREE, no token needed)"""
         
         img = PILImage.open(BytesIO(image_data))
         if img.mode not in ('RGB', 'RGBA'):
             img = img.convert('RGB')
         
-        img.thumbnail((512, 512), PILImage.LANCZOS)
+        img.thumbnail((768, 768), PILImage.LANCZOS)
         
         buffered = BytesIO()
         img.save(buffered, format="PNG")
         img_bytes = buffered.getvalue()
         
-        img_base64 = base64.b64encode(img_bytes).decode()
+        print("[HuggingFace] Generating AI video (30-120s wait)...")
         
-        api_url = "https://api-inference.huggingface.co/models/ali-vilab/i2vgen-xl"
-        headers = {"Content-Type": "application/json"}
-        payload = {"inputs": img_base64}
+        models = [
+            "stabilityai/stable-video-diffusion-img2vid-xt",
+            "ali-vilab/i2vgen-xl",
+        ]
         
-        response = requests.post(api_url, headers=headers, json=payload, timeout=120)
+        for model_name in models:
+            try:
+                api_url = f"https://api-inference.huggingface.co/models/{model_name}"
+                
+                headers = {"Content-Type": "application/octet-stream"}
+                
+                response = requests.post(
+                    api_url, 
+                    headers=headers, 
+                    data=img_bytes, 
+                    timeout=180
+                )
+                
+                if response.status_code == 503:
+                    print(f"[HuggingFace] Model {model_name} loading, waiting 30s...")
+                    time.sleep(30)
+                    response = requests.post(
+                        api_url, 
+                        headers=headers, 
+                        data=img_bytes, 
+                        timeout=180
+                    )
+                
+                if response.status_code == 200:
+                    video_data = response.content
+                    if len(video_data) > 1000:
+                        print(f"[HuggingFace] Success with {model_name}! {len(video_data)} bytes")
+                        return video_data
+                    else:
+                        print(f"[HuggingFace] {model_name} returned too small file")
+                else:
+                    print(f"[HuggingFace] {model_name} error: {response.status_code}")
+                    
+            except Exception as e:
+                print(f"[HuggingFace] {model_name} failed: {e}")
+                continue
         
-        if response.status_code == 503:
-            print("[HuggingFace] Model loading, waiting 20s...")
-            time.sleep(20)
-            response = requests.post(api_url, headers=headers, json=payload, timeout=120)
-        
-        if response.status_code == 200:
-            print(f"[HuggingFace] Success! {len(response.content)} bytes")
-            return response.content
-        else:
-            raise Exception(f"API error {response.status_code}")
+        raise Exception("All HuggingFace models failed or unavailable")
     
     def _generate_simple_animation(self, image_data: bytes) -> bytes:
         """
