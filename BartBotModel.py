@@ -90,12 +90,33 @@ class BartBotModel(AIModel):
 
     def generate_image(self, prompt: str) -> bytes:
         from huggingface_hub import InferenceClient
+        from google.genai import types
+
+        try:
+            print(f"[BartBotModel] Searching web to enhance image prompt: '{prompt}'")
+            search_response = self.client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=f"""Search the web and find detailed visual descriptions for: {prompt}
+                
+Then write an enhanced, highly detailed image generation prompt based on what you find.
+Focus on: colors, textures, lighting, style, composition, specific visual details.
+Return ONLY the enhanced prompt, nothing else.""",
+                config=types.GenerateContentConfig(
+                    tools=[types.Tool(google_search=types.GoogleSearch())]
+                )
+            )
+            enhanced_prompt = search_response.text.strip()
+            print(f"[BartBotModel] Enhanced prompt: '{enhanced_prompt}'")
+        except Exception as e:
+            print(f"[BartBotModel] Web search failed, using original prompt: {e}")
+            enhanced_prompt = prompt
+
         hf_token = os.getenv("HF_TOKEN") or os.getenv("HUGGING_FACE_HUB_TOKEN")
         if not hf_token:
             raise Exception("HF_TOKEN missing for image generation.")
         
         client = InferenceClient(api_key=hf_token)
-        image = client.text_to_image(prompt, model="black-forest-labs/FLUX.1-schnell")
+        image = client.text_to_image(enhanced_prompt, model="black-forest-labs/FLUX.1-schnell")
         
         img_byte_arr = io.BytesIO()
         image.save(img_byte_arr, format='PNG')
